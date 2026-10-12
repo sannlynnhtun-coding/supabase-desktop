@@ -103,6 +103,30 @@ public sealed class NativeStack(IConfiguration configuration, ILogger<NativeStac
                 available.Add("Auth");
                 Volatile.Write(ref status, Status with { Unavailable = Status.Unavailable.Where(s => s != "Auth").ToArray() });
             }
+            if (File.Exists(Path.Combine(root, "storage/dist/start/server.js")))
+            {
+                Update("starting", "Starting native Supabase Storage");
+                var storagePath = Path.Combine(data, "storage");
+                Directory.CreateDirectory(storagePath);
+                await StartReadyAsync("node-storage/node.exe", [Path.Combine(root, "storage/dist/start/server.js")], Path.Combine(root, "storage"), new()
+                {
+                    ["NODE_ENV"] = "production", ["SERVER_HOST"] = "127.0.0.1", ["SERVER_PORT"] = "54330",
+                    ["MULTI_TENANT"] = "false", ["OTEL_METRICS_ENABLED"] = "false", ["TRACING_ENABLED"] = "false",
+                    ["SERVER_ADMIN_PORT"] = "54331", ["AUTH_JWT_SECRET"] = secrets.JwtSecret,
+                    ["ANON_KEY"] = keys.Anon!, ["SERVICE_KEY"] = keys.Service!,
+                    ["DATABASE_URL"] = $"postgresql://postgres:{secrets.DatabasePassword}@127.0.0.1:54322/postgres",
+                    ["STORAGE_BACKEND"] = "file", ["STORAGE_FILE_BACKEND_PATH"] = storagePath,
+                    ["DB_INSTALL_ROLES"] = "false", ["DB_ALLOW_MIGRATION_REFRESH"] = "false",
+                    ["DB_SUPER_USER"] = "postgres", ["UPLOAD_FILE_SIZE_LIMIT"] = "52428800",
+                    ["STORAGE_PUBLIC_URL"] = "http://127.0.0.1:54321/storage/v1",
+                    ["TENANT_ID"] = "default", ["REGION"] = "local", ["GLOBAL_S3_BUCKET"] = "local",
+                    ["PG_QUEUE_ENABLE"] = "false", ["IMAGE_TRANSFORMATION_ENABLED"] = "false",
+                    ["S3_PROTOCOL_ENABLED"] = "false", ["VECTOR_ENABLED"] = "false", ["ICEBERG_ENABLED"] = "false",
+                    ["VECTOR_STORE_MIGRATIONS_ENABLED"] = "false", ["WORKERS_NUM"] = "1",
+                }, "storage", "http://127.0.0.1:54330/status", stoppingToken);
+                available.Add("Storage");
+                Volatile.Write(ref status, Status with { Unavailable = Status.Unavailable.Where(s => s != "Storage").ToArray() });
+            }
             Update("starting", "Starting upstream Supabase Studio");
             var studioEnv = new Dictionary<string, string>
             {

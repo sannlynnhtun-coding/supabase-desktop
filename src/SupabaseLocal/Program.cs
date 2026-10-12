@@ -10,11 +10,13 @@ builder.Services.AddReverseProxy().LoadFromMemory(
     {
         new RouteConfig { RouteId = "rest", ClusterId = "rest", Match = new() { Path = "/rest/v1/{**remainder}" }, Transforms = [new Dictionary<string, string> { ["PathRemovePrefix"] = "/rest/v1" }] },
         new RouteConfig { RouteId = "auth", ClusterId = "auth", Match = new() { Path = "/auth/v1/{**remainder}" }, Transforms = [new Dictionary<string, string> { ["PathRemovePrefix"] = "/auth/v1" }] },
+        new RouteConfig { RouteId = "storage", ClusterId = "storage", Match = new() { Path = "/storage/v1/{**remainder}" }, Transforms = [new Dictionary<string, string> { ["PathRemovePrefix"] = "/storage/v1" }] },
     },
     new[]
     {
         new ClusterConfig { ClusterId = "rest", Destinations = new Dictionary<string, DestinationConfig> { ["local"] = new() { Address = "http://127.0.0.1:54326/" } } },
         new ClusterConfig { ClusterId = "auth", Destinations = new Dictionary<string, DestinationConfig> { ["local"] = new() { Address = "http://127.0.0.1:54328/" } } },
+        new ClusterConfig { ClusterId = "storage", Destinations = new Dictionary<string, DestinationConfig> { ["local"] = new() { Address = "http://127.0.0.1:54330/" } } },
     });
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy.SetIsOriginAllowed(origin => Uri.TryCreate(origin, UriKind.Absolute, out var uri) && (uri.Host == "localhost" || uri.Host == "127.0.0.1")).AllowAnyHeader().AllowAnyMethod()));
 builder.Services.AddSingleton<NativeStack>();

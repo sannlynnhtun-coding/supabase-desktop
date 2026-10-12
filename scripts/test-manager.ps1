@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$Manager, [Parameter(Mandatory=$true)][string]$Runtime, [string]$Data = "$PSScriptRoot/../work/manager-integration", [ValidateRange(2,10)][int]$Cycles = 2)
+param([Parameter(Mandatory=$true)][string]$Manager, [Parameter(Mandatory=$true)][string]$Runtime, [string]$Data = "$PSScriptRoot/../work/manager-integration", [ValidateRange(2,10)][int]$Cycles = 2, [switch]$WithStorage)
 $ErrorActionPreference = 'Stop'
 $managerPath = [IO.Path]::GetFullPath($Manager)
 $runtimePath = [IO.Path]::GetFullPath($Runtime)
@@ -22,7 +22,7 @@ for ($cycle = 1; $cycle -le $Cycles; $cycle++) {
     $process = Start-Process $managerPath -WorkingDirectory ([IO.Path]::GetDirectoryName($managerPath)) -WindowStyle Hidden -PassThru -RedirectStandardOutput "$dataPath/manager-$cycle.out.log" -RedirectStandardError "$dataPath/manager-$cycle.err.log"
     try {
         $ready = $false
-        for ($attempt = 0; $attempt -lt 180; $attempt++) {
+        for ($attempt = 0; $attempt -lt 600; $attempt++) {
             if ($process.HasExited) { throw 'Manager exited before readiness' }
             try {
                 $status = Invoke-RestMethod http://127.0.0.1:54320/api/status -TimeoutSec 2
@@ -48,6 +48,13 @@ for ($cycle = 1; $cycle -le $Cycles; $cycle++) {
         }
         $login = Invoke-RestMethod 'http://127.0.0.1:54321/auth/v1/token?grant_type=password' -Headers $headers -Method Post -ContentType 'application/json' -Body $credentials -TimeoutSec 10
         if (!$login.access_token) { throw 'Gateway Auth login failed' }
+        if ($WithStorage) {
+            if ($status.available -notcontains 'Storage') { throw 'Storage is unavailable' }
+            $env:STORAGE_TEST_ACCESS_TOKEN = $login.access_token
+            & node "$PSScriptRoot/test-storage-api.mjs" $dataPath $cycle
+            if ($LASTEXITCODE -ne 0) { throw 'Storage integration checks failed' }
+            Remove-Item Env:STORAGE_TEST_ACCESS_TOKEN
+        }
         Invoke-RestMethod http://127.0.0.1:54321/rest/v1/ -Headers $headers -TimeoutSec 10 | Out-Null
         try { Invoke-WebRequest http://127.0.0.1:54321/rest/v1/ -UseBasicParsing -TimeoutSec 3 | Out-Null; throw 'Gateway accepted a missing API key' } catch [System.Net.WebException] { if ([int]$_.Exception.Response.StatusCode -ne 401) { throw } }
         "PASS: manager cycle $cycle, real Studio SQL, gateway Auth/REST, missing-key rejection and stable secrets."
@@ -58,7 +65,7 @@ for ($cycle = 1; $cycle -le $Cycles; $cycle++) {
         }
         $process.Dispose()
     }
-    foreach ($port in @(54320,54321,54322,54323,54324,54325,54326,54328)) {
+    foreach ($port in @(54320,54321,54322,54323,54324,54325,54326,54328,54330,54331)) {
         if (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue) { throw "Service left listening after shutdown: $port" }
     }
     'PASS: all owned listeners stopped without deleting the database.'

@@ -15,10 +15,10 @@ This is an unofficial experimental port, not an upstream-supported Supabase CLI 
 | postgres-meta | Build upstream TypeScript and run on Windows Node | Asset-copy port and SQL introspection verified |
 | PostgREST | Upstream Windows release executable | JWT and RLS integration verified; needs private libpq on child PATH |
 | Auth | Compile upstream Go source for Windows; execute database migrations | Unix listener control isolated; signup/login and migrations verified |
-| Storage | Build upstream Node service; native filesystem adapter | NTFS adapter checked; full service build blocked by dependency download failures |
+| Storage | Build upstream Node 24 service; NTFS alternate streams replace Unix xattrs | Native build, migrations, file APIs, metadata and RLS verified across restarts |
 | Realtime | Windows Erlang/Elixir build, migration and replication tests | Not verified |
 | Edge Runtime | Investigate upstream Rust/Deno Windows build | Not verified |
-| Gateway | ASP.NET Core/YARP reverse proxy with Auth/REST routes and API key handling | Core routes and missing-key rejection verified; other service routes pending |
+| Gateway | ASP.NET Core/YARP reverse proxy with Auth/REST/Storage routes | Auth/REST keys and upstream Storage JWT/public/signed routes verified |
 | Supabase Postgres extensions | Build required extensions individually against Windows PostgreSQL | Not verified |
 
 Plain PostgreSQL is not equivalent to the Supabase Postgres distribution. Features depending on unavailable extensions must remain explicitly unavailable.

@@ -28,7 +28,9 @@ foreach ($tool in @('git','node','dotnet','npm.cmd')) { Get-Command $tool -Error
 $studio = Source 'supabase' $lock.studio
 $meta = Source 'postgres-meta' $lock.pgmeta
 $auth = Source 'auth' $lock.auth
+$storage = Source 'storage' $lock.storage
 Archive 'node' $lock.downloads.node "$repo/work/runtime" "$repo/work/runtime/node-v22.16.0-win-x64/node.exe"
+Archive 'node-storage' $lock.downloads.nodeStorage "$repo/work/runtime" "$repo/work/runtime/node-v24.15.0-win-x64/node.exe"
 Archive 'postgres' $lock.downloads.postgres "$repo/work/runtime" "$repo/work/runtime/pgsql/bin/postgres.exe"
 Archive 'postgrest' $lock.downloads.postgrest "$repo/work/runtime/postgrest" "$repo/work/runtime/postgrest/postgrest.exe"
 Archive 'go' $lock.downloads.go "$repo/work/toolchains" "$repo/work/toolchains/go/bin/go.exe"
@@ -45,6 +47,14 @@ try {
     & "$repo/work/toolchains/go/bin/go.exe" fmt ./cmd; Check-Exit 'Auth format'
     & "$repo/work/toolchains/go/bin/go.exe" build -trimpath -ldflags '-X github.com/supabase/auth/internal/utilities.Version=v2.197.0-windows' -o "$repo/work/runtime/auth/auth.exe" .; Check-Exit 'Auth build'
 } finally { Pop-Location }
+& node scripts/patch-storage.mjs $storage; Check-Exit 'Storage Windows patch'
+Push-Location $storage
+try {
+    & npm.cmd ci --ignore-scripts --no-audit --no-fund --maxsockets=4 --fetch-retries=1 --fetch-timeout=30000; Check-Exit 'Storage dependencies'
+    & npm.cmd rebuild; Check-Exit 'Storage dependency rebuild'
+    & npm.cmd run build; Check-Exit 'Storage Windows build'
+} finally { Pop-Location }
+& "$PSScriptRoot/prepare-storage.ps1" -Source $storage; Check-Exit 'Storage runtime preparation'
 if (!$SkipStudioBuild) {
     & npm.cmd install --prefix "$repo/work/toolchains/pnpm" pnpm@11.13.1 --ignore-scripts --no-audit --no-fund; Check-Exit 'pnpm build tool'
     & node "$repo/work/toolchains/pnpm/node_modules/pnpm/bin/pnpm.cjs" --dir $studio --filter studio... install --frozen-lockfile --ignore-scripts; Check-Exit 'Studio dependencies'
