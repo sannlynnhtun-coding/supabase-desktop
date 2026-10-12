@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="../Shared/RuntimeLinks.cs" Link="RuntimeLinks.cs" />
     <PackageReference Include="Yarp.ReverseProxy" Version="2.3.0" />
     <Content Include="bootstrap.sql" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>

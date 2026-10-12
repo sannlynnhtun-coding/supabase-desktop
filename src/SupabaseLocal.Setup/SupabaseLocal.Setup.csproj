@@ -7,6 +7,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+  <ItemGroup><Compile Include="../Shared/RuntimeLinks.cs" Link="RuntimeLinks.cs" /></ItemGroup>
   <ItemGroup Condition="Exists('$(PayloadPath)')">
     <EmbeddedResource Include="$(PayloadPath)" LogicalName="SupabaseLocal.Payload.zip" />
   </ItemGroup>

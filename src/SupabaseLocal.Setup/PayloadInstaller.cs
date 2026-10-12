@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.Json;
+using SupabaseLocal.Packaging;
 
 namespace SupabaseLocal.Setup;
 
@@ -26,6 +27,7 @@ internal static class PayloadInstaller
         if (Directory.Exists(destination))
         {
             Verify(destination, files, progress);
+            RuntimeLinks.Restore(Path.Combine(destination, "runtime"));
             return destination;
         }
         Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
@@ -48,6 +50,8 @@ internal static class PayloadInstaller
             }
             if (!File.Exists(Path.Combine(staging, "SupabaseLocal.exe"))) throw new InvalidDataException("Payload is missing the manager.");
             Directory.Move(staging, destination);
+            try { RuntimeLinks.Restore(Path.Combine(destination, "runtime")); }
+            catch { RuntimeLinks.Remove(Path.Combine(destination, "runtime")); Directory.Delete(destination, recursive: true); throw; }
             progress.Report("Native runtime installed. Starting services…");
             return destination;
         }

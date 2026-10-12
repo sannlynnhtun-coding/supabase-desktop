@@ -25,6 +25,20 @@ try
     ExpectFailure(() => PayloadInstaller.InstallPayload(corrupt, root, progress), "checksum mismatch");
     if (Directory.GetDirectories(Path.Combine(root, "versions"), "*.staging-*").Length != 0) throw new Exception("Failed install leaked staging files");
     if (File.ReadAllText(Path.Combine(root, "data", "sentinel")) != "user data") throw new Exception("Install altered user data");
+    if (OperatingSystem.IsWindows())
+    {
+        var linksRoot = Path.Combine(root, "runtime-links");
+        Directory.CreateDirectory(Path.Combine(linksRoot, "packages", "example"));
+        File.WriteAllText(Path.Combine(linksRoot, "packages", "example", "index.js"), "module.exports=42");
+        File.WriteAllText(Path.Combine(linksRoot, "links.json"), "{\"node_modules/example\":{\"target\":\"packages/example\",\"directory\":true}}");
+        SupabaseLocal.Packaging.RuntimeLinks.Restore(linksRoot);
+        if (File.ReadAllText(Path.Combine(linksRoot, "node_modules", "example", "index.js")) != "module.exports=42") throw new Exception("Junction resolution failed");
+        SupabaseLocal.Packaging.RuntimeLinks.Restore(linksRoot);
+        Directory.Delete(Path.Combine(linksRoot, "node_modules", "example"));
+        File.WriteAllText(Path.Combine(linksRoot, "links.json"), "{\"unsafe\":{\"target\":\"../../outside\",\"directory\":true}}");
+        ExpectFailure(() => SupabaseLocal.Packaging.RuntimeLinks.Restore(linksRoot), "escaping runtime link");
+        Console.WriteLine("PASS: native NTFS junction creation, repeated verification and escaping-link rejection.");
+    }
     Console.WriteLine("PASS: extraction, repeat install, tamper detection, traversal rejection, corrupt-payload rollback and data preservation.");
 }
 finally { Directory.Delete(root, recursive: true); }
