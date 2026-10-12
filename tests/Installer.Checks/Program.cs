@@ -34,7 +34,7 @@ try
         SupabaseLocal.Packaging.RuntimeLinks.Restore(linksRoot);
         if (File.ReadAllText(Path.Combine(linksRoot, "node_modules", "example", "index.js")) != "module.exports=42") throw new Exception("Junction resolution failed");
         SupabaseLocal.Packaging.RuntimeLinks.Restore(linksRoot);
-        Directory.Delete(Path.Combine(linksRoot, "node_modules", "example"));
+        SupabaseLocal.Packaging.RuntimeLinks.Remove(linksRoot);
         File.WriteAllText(Path.Combine(linksRoot, "links.json"), "{\"unsafe\":{\"target\":\"../../outside\",\"directory\":true}}");
         ExpectFailure(() => SupabaseLocal.Packaging.RuntimeLinks.Restore(linksRoot), "escaping runtime link");
         Console.WriteLine("PASS: native NTFS junction creation, repeated verification and escaping-link rejection.");

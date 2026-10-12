@@ -12,6 +12,7 @@ internal sealed class SetupWindow : Form
     private readonly string token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
     private Process? manager;
     private bool closing;
+    private bool installing = true;
     public SetupWindow()
     {
         Text = "Supabase Local — Native Windows";
@@ -23,6 +24,7 @@ internal sealed class SetupWindow : Form
         Shown += async (_, _) => await InstallAndStartAsync();
         FormClosing += async (_, e) =>
         {
+            if (installing) { e.Cancel = true; message.Text = "Finishing installation before closing…"; return; }
             if (closing || manager is null || manager.HasExited) return;
             e.Cancel = true;
             closing = true;
@@ -50,6 +52,7 @@ internal sealed class SetupWindow : Form
     {
         try
         {
+            await Prerequisites.EnsureAsync(text => message.Text = text);
             var directory = await Task.Run(() => PayloadInstaller.Install(new Progress<string>(text => BeginInvoke(() => message.Text = text))));
             var info = new ProcessStartInfo(Path.Combine(directory, "SupabaseLocal.exe")) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = directory };
             info.Environment["LauncherToken"] = token;
@@ -80,6 +83,7 @@ internal sealed class SetupWindow : Form
             throw new TimeoutException("Services did not start within three minutes. Check logs in %LOCALAPPDATA%\\SupabaseLocal\\data.");
         }
         catch (Exception ex) { message.Text = "Setup could not finish:\n" + ex.Message; }
+        finally { installing = false; }
     }
     private static void Browse(string url) => Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
     private sealed record Status(string State, string Message, string? StudioUrl);
