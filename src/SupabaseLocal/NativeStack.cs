@@ -28,6 +28,7 @@ public sealed class NativeStack(IConfiguration configuration, ILogger<NativeStac
         try
         {
             if (!OperatingSystem.IsWindows()) throw new PlatformNotSupportedException("This port requires native Windows.");
+            Packaging.RuntimeLinks.Restore(root);
             string[] required = ["postgres/bin/initdb.exe", "postgres/bin/pg_ctl.exe", "node/node.exe", "pgmeta/dist/server/server.js", "studio/server.js"];
             var missing = required.Where(file => !File.Exists(Path.Combine(root, file))).ToArray();
             if (missing.Length > 0) throw new InvalidOperationException("Runtime payload is incomplete: " + string.Join(", ", missing));
@@ -62,7 +63,7 @@ public sealed class NativeStack(IConfiguration configuration, ILogger<NativeStac
             }
             Update("starting", "Starting PostgreSQL on 127.0.0.1:54322");
             // pg_ctl starts a detached server. Stop it explicitly during shutdown.
-            await RunAsync("postgres/bin/pg_ctl.exe", ["-D", pgData, "-l", Path.Combine(data, "postgres.log"), "-w", "-t", "60", "start"], null, stoppingToken);
+            await RunAsync("postgres/bin/pg_ctl.exe", ["-D", pgData, "-l", Path.Combine(data, "postgres.log"), "-w", "-t", "60", "start"], null, CancellationToken.None);
             postgresOwned = true;
             var pgEnv = new Dictionary<string, string> { ["PGPASSWORD"] = secrets.DatabasePassword };
             await RunAsync("postgres/bin/psql.exe", ["-h", "127.0.0.1", "-p", "54322", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-c", "SELECT 1"], pgEnv, stoppingToken);
@@ -165,9 +166,14 @@ public sealed class NativeStack(IConfiguration configuration, ILogger<NativeStac
     }
     private async Task RunAsync(string file, string[] args, Dictionary<string, string>? environment, CancellationToken token)
     {
-        using var process = Process.Start(Info(file, args, null, environment)) ?? throw new InvalidOperationException("Could not launch " + file);
-        var stdout = process.StandardOutput.ReadToEndAsync(token);
-        var stderr = process.StandardError.ReadToEndAsync(token);
+        var info = Info(file, args, null, environment);
+        var detached = file.EndsWith("pg_ctl.exe", StringComparison.OrdinalIgnoreCase);
+        // On Windows pg_ctl's detached server inherits pipe handles. Waiting for
+        // EOF on redirected pipes would wait for PostgreSQL itself to stop.
+        if (detached) { info.RedirectStandardOutput = false; info.RedirectStandardError = false; }
+        using var process = Process.Start(info) ?? throw new InvalidOperationException("Could not launch " + file);
+        var stdout = detached ? Task.FromResult("") : process.StandardOutput.ReadToEndAsync(token);
+        var stderr = detached ? Task.FromResult("") : process.StandardError.ReadToEndAsync(token);
         try { await process.WaitForExitAsync(token); }
         catch { if (!process.HasExited) process.Kill(true); throw; }
         await stdout;

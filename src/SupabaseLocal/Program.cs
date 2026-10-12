@@ -4,6 +4,7 @@ using Yarp.ReverseProxy.Configuration;
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://127.0.0.1:54320", "http://127.0.0.1:54321");
 builder.Services.AddSingleton<ApiKeys>();
+builder.Services.Configure<HostOptions>(options => options.ShutdownTimeout = TimeSpan.FromSeconds(90));
 builder.Services.AddReverseProxy().LoadFromMemory(
     new[]
     {
