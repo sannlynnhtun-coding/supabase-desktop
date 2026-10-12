@@ -6,7 +6,7 @@ ASP.NET Core 10 application foundation for a Windows installer and local Supabas
 
 The official Supabase local stack cannot currently run natively on Windows without a container engine. Its experimental native runtime supports Linux amd64/arm64 (Ubuntu 22.04 or later / glibc 2.35+) and Apple-silicon macOS.
 
-A proposed Docker-free Windows implementation would use a dedicated Ubuntu WSL2 distribution for Supabase services and a Windows ASP.NET Core dashboard to manage them. WSL2 integration remains unimplemented pending the runtime decision. This repository does not yet contain a working Supabase installer.
+The project requires native Windows execution: Docker and WSL2 are excluded. The implementation scope is pending: either build a Supabase-inspired ASP.NET Core backend with explicitly defined compatibility, or investigate porting the upstream services to Windows. This repository does not yet contain a working Supabase installer.
 
 References:
 
@@ -28,4 +28,4 @@ The application currently contains the standard ASP.NET Core empty-template endp
 
 Use Conventional Commits for each completed task, such as `chore: scaffold ASP.NET Core 10 application` and `feat: add local stack management`.
 
-No Git remote has been configured yet.
+Git remote: https://github.com/sannlynnhtun-coding/supabase-local
