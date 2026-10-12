@@ -13,6 +13,7 @@ public sealed record LocalSecrets(string DatabasePassword, string JwtSecret, str
 public sealed class NativeStack(IConfiguration configuration, ILogger<NativeStack> logger, ApiKeys keys) : BackgroundService
 {
     private readonly List<Process> children = [];
+    private readonly Dictionary<Process, Task> logTasks = [];
     private readonly HttpClient http = new() { Timeout = TimeSpan.FromSeconds(5) };
     private readonly string root = Path.GetFullPath(configuration["RuntimeRoot"] ?? Path.Combine(AppContext.BaseDirectory, "runtime"));
     private readonly string data = Path.GetFullPath(configuration["DataRoot"] ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SupabaseLocal", "data"));
@@ -76,23 +77,21 @@ public sealed class NativeStack(IConfiguration configuration, ILogger<NativeStac
                 ["PG_META_DB_USER"] = "postgres", ["PG_META_DB_NAME"] = "postgres",
                 ["PG_META_DB_PASSWORD"] = secrets.DatabasePassword, ["CRYPTO_KEY"] = secrets.MetaCryptoKey,
             };
-            Start("node/node.exe", [Path.Combine(root, "pgmeta/dist/server/server.js")], Path.Combine(root, "pgmeta"), common, "pgmeta");
-            await WaitHttpAsync("http://127.0.0.1:54324/health", stoppingToken);
+            await StartReadyAsync("node/node.exe", [Path.Combine(root, "pgmeta/dist/server/server.js")], Path.Combine(root, "pgmeta"), common, "pgmeta", "http://127.0.0.1:54324/health", stoppingToken);
             var available = new List<string> { "PostgreSQL", "postgres-meta", "Studio" };
             if (File.Exists(Path.Combine(root, "postgrest/postgrest.exe")))
             {
-                Start("postgrest/postgrest.exe", [], Path.Combine(root, "postgrest"), new()
+                await StartReadyAsync("postgrest/postgrest.exe", [], Path.Combine(root, "postgrest"), new()
                 {
                     ["PGRST_DB_URI"] = $"postgresql://authenticator:{secrets.DatabasePassword}@127.0.0.1:54322/postgres",
                     ["PGRST_DB_SCHEMAS"] = "public", ["PGRST_DB_ANON_ROLE"] = "anon", ["PGRST_JWT_SECRET"] = secrets.JwtSecret,
                     ["PGRST_SERVER_HOST"] = "127.0.0.1", ["PGRST_SERVER_PORT"] = "54326",
-                }, "postgrest");
-                await WaitHttpAsync("http://127.0.0.1:54326/", stoppingToken);
+                }, "postgrest", "http://127.0.0.1:54326/", stoppingToken);
                 available.Add("PostgREST");
             }
             if (File.Exists(Path.Combine(root, "auth/auth.exe")))
             {
-                Start("auth/auth.exe", [], Path.Combine(root, "auth"), new()
+                await StartReadyAsync("auth/auth.exe", [], Path.Combine(root, "auth"), new()
                 {
                     ["GOTRUE_API_HOST"] = "127.0.0.1", ["GOTRUE_API_PORT"] = "54328",
                     ["API_EXTERNAL_URL"] = "http://127.0.0.1:54321/auth/v1", ["GOTRUE_SITE_URL"] = "http://localhost:3000",
@@ -100,8 +99,7 @@ public sealed class NativeStack(IConfiguration configuration, ILogger<NativeStac
                     ["GOTRUE_JWT_SECRET"] = secrets.JwtSecret, ["GOTRUE_JWT_AUD"] = "authenticated",
                     ["GOTRUE_JWT_DEFAULT_GROUP_NAME"] = "authenticated", ["GOTRUE_JWT_ADMIN_ROLES"] = "service_role",
                     ["GOTRUE_EXTERNAL_EMAIL_ENABLED"] = "true", ["GOTRUE_MAILER_AUTOCONFIRM"] = "true",
-                }, "auth");
-                await WaitHttpAsync("http://127.0.0.1:54328/health", stoppingToken);
+                }, "auth", "http://127.0.0.1:54328/health", stoppingToken);
                 available.Add("Auth");
                 Volatile.Write(ref status, Status with { Unavailable = Status.Unavailable.Where(s => s != "Auth").ToArray() });
             }
@@ -122,8 +120,7 @@ public sealed class NativeStack(IConfiguration configuration, ILogger<NativeStac
             };
             Directory.CreateDirectory(studioEnv["SNIPPETS_MANAGEMENT_FOLDER"]);
             Directory.CreateDirectory(studioEnv["EDGE_FUNCTIONS_MANAGEMENT_FOLDER"]);
-            Start("node/node.exe", [Path.Combine(root, "studio/server.js")], Path.Combine(root, "studio"), studioEnv, "studio");
-            await WaitHttpAsync("http://127.0.0.1:54323/api/platform/profile", stoppingToken);
+            await StartReadyAsync("node/node.exe", [Path.Combine(root, "studio/server.js")], Path.Combine(root, "studio"), studioEnv, "studio", "http://127.0.0.1:54323/api/platform/profile", stoppingToken);
             Update("partial", "Studio and database are ready. Other Supabase services are still being ported.", "http://127.0.0.1:54323", available.ToArray());
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -180,12 +177,30 @@ public sealed class NativeStack(IConfiguration configuration, ILogger<NativeStac
         var error = await stderr;
         if (process.ExitCode != 0) throw new InvalidOperationException($"{Path.GetFileName(file)} failed ({process.ExitCode}): {error}");
     }
-    private void Start(string file, string[] args, string cwd, Dictionary<string, string> environment, string name)
+    private Process Start(string file, string[] args, string cwd, Dictionary<string, string> environment, string name)
     {
         var process = Process.Start(Info(file, args, cwd, environment)) ?? throw new InvalidOperationException("Could not launch " + name);
         children.Add(process);
-        _ = CaptureAsync(process.StandardOutput, name);
-        _ = CaptureAsync(process.StandardError, name);
+        logTasks[process] = Task.WhenAll(CaptureAsync(process.StandardOutput, name), CaptureAsync(process.StandardError, name));
+        return process;
+    }
+    private async Task StartReadyAsync(string file, string[] args, string cwd, Dictionary<string, string> environment, string name, string health, CancellationToken token)
+    {
+        for (int attempt = 1; ; attempt++)
+        {
+            var process = Start(file, args, cwd, environment, name);
+            try { await WaitHttpAsync(health, token); return; }
+            catch (InvalidOperationException) when (process.HasExited && attempt < 3)
+            {
+                logger.LogWarning("{Service} exited with code {Code} during startup attempt {Attempt}; retrying", name, process.ExitCode, attempt);
+                try { await logTasks[process].WaitAsync(TimeSpan.FromSeconds(3), token); }
+                catch (TimeoutException) { }
+                children.Remove(process);
+                logTasks.Remove(process);
+                process.Dispose();
+                await Task.Delay(TimeSpan.FromSeconds(attempt * 2), token);
+            }
+        }
     }
     private async Task CaptureAsync(StreamReader reader, string name)
     {
@@ -203,7 +218,8 @@ public sealed class NativeStack(IConfiguration configuration, ILogger<NativeStac
         for (var attempt = 0; attempt < 90; attempt++)
         {
             token.ThrowIfCancellationRequested();
-            if (children.Any(p => p.HasExited)) throw new InvalidOperationException("Service exited before becoming healthy.");
+            var exited = children.FirstOrDefault(p => p.HasExited);
+            if (exited is not null) throw new InvalidOperationException($"{Path.GetFileName(exited.StartInfo.FileName)} exited ({exited.ExitCode}) before {url} became healthy. Check service logs in {data}.");
             try { using var response = await http.GetAsync(url, token); if (response.IsSuccessStatusCode) return; }
             catch (HttpRequestException) { }
             catch (TaskCanceledException) when (!token.IsCancellationRequested) { }

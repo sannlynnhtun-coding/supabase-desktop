@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$Manager, [Parameter(Mandatory=$true)][string]$Runtime, [string]$Data = "$PSScriptRoot/../work/manager-integration")
+param([Parameter(Mandatory=$true)][string]$Manager, [Parameter(Mandatory=$true)][string]$Runtime, [string]$Data = "$PSScriptRoot/../work/manager-integration", [ValidateRange(2,10)][int]$Cycles = 2)
 $ErrorActionPreference = 'Stop'
 $managerPath = [IO.Path]::GetFullPath($Manager)
 $runtimePath = [IO.Path]::GetFullPath($Runtime)
@@ -18,7 +18,7 @@ function Key([string]$Secret) {
 $initialSecretsHash = $null
 $email = [Guid]::NewGuid().ToString('N') + '@example.com'
 $password = [Guid]::NewGuid().ToString('N') + '-Native123!'
-for ($cycle = 1; $cycle -le 2; $cycle++) {
+for ($cycle = 1; $cycle -le $Cycles; $cycle++) {
     $process = Start-Process $managerPath -WorkingDirectory ([IO.Path]::GetDirectoryName($managerPath)) -WindowStyle Hidden -PassThru -RedirectStandardOutput "$dataPath/manager-$cycle.out.log" -RedirectStandardError "$dataPath/manager-$cycle.err.log"
     try {
         $ready = $false
