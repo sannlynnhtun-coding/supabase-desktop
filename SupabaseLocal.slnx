@@ -1,5 +1,9 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/SupabaseLocal.Setup/SupabaseLocal.Setup.csproj" />
     <Project Path="src/SupabaseLocal/SupabaseLocal.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Installer.Checks/Installer.Checks.csproj" />
   </Folder>
 </Solution>
