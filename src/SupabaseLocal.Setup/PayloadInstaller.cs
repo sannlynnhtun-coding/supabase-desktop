@@ -18,7 +18,7 @@ internal static class PayloadInstaller
     {
         var version = Convert.ToHexString(SHA256.HashData(payload)).ToLowerInvariant()[..16];
         payload.Position = 0;
-        using var archive = new ZipArchive(payload, ZipArchiveMode.Read);
+        using var archive = new ZipArchive(payload, ZipArchiveMode.Read, leaveOpen: true);
         var manifestEntry = archive.GetEntry("manifest.json") ?? throw new InvalidDataException("Payload has no checksum manifest.");
         using var manifestStream = manifestEntry.Open();
         var files = JsonSerializer.Deserialize<Dictionary<string, string>>(manifestStream) ?? throw new InvalidDataException("Invalid manifest.");
