@@ -103,6 +103,14 @@ internal sealed class SetupWindow : Form
         catch (Exception ex)
         {
             message.Text = "Setup could not finish:\n" + ex.Message;
+            try
+            {
+                var folder = InstallationScope.Current.Root;
+                Directory.CreateDirectory(folder);
+                File.WriteAllText(Path.Combine(folder, "setup-error.log"), ex.ToString());
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
             if (verificationData is not null) { Environment.ExitCode = 1; BeginInvoke(() => Close()); }
         }
         finally { installing = false; }
