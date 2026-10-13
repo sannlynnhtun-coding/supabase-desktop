@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { createHmac } from 'node:crypto'
+import { createHmac, randomUUID } from 'node:crypto'
 import assert from 'node:assert/strict'
 
 const secret = JSON.parse(readFileSync(join(process.argv[2], 'secrets.json'), 'utf8')).JwtSecret
@@ -23,7 +23,9 @@ async function json(path, method, body, token = service, allowed = [200]) {
 const content = 'Native Windows Storage — persistence ✓\n'
 const privateBucket = 'native-private', publicBucket = 'native-public'
 assert.equal((await (await request('/health')).json()).healthy, true)
-await request('/bucket', { token: service.slice(0, -1) + (service.endsWith('A') ? 'B' : 'A'), allowed: [400, 401, 403] })
+const signatureStart = service.lastIndexOf('.') + 1
+const tampered = service.slice(0, signatureStart) + (service[signatureStart] === 'A' ? 'B' : 'A') + service.slice(signatureStart + 1)
+await request('/bucket', { token: tampered, allowed: [400, 401, 403] })
 const privilege = await fetch('http://127.0.0.1:54323/api/platform/pg-meta/default/query', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: "SELECT pg_has_role('authenticator', 'postgres', 'MEMBER') AS elevated;" }) })
 assert(privilege.ok)
 assert.equal((await privilege.json())[0].elevated, false, 'Storage migrations elevated the REST role')
@@ -48,6 +50,11 @@ for (const path of [`/object/${privateBucket}/folder/hello.txt`, `/object/${priv
 assert.equal(await (await request(`/object/${privateBucket}/owned.txt`, { token: user })).text(), content)
 await request(`/object/${privateBucket}/folder/hello.txt`, { token: anon, allowed: [400, 403, 404] })
 await request(`/object/${privateBucket}/owned.txt`, { token: anon, allowed: [400, 403, 404] })
+const stranger = await fetch('http://127.0.0.1:54321/auth/v1/signup', { method: 'POST', headers: { apikey: anon, 'Content-Type': 'application/json' }, body: JSON.stringify({ email: randomUUID() + '@example.com', password: randomUUID() + '-Native123!' }) })
+assert(stranger.ok)
+const strangerSession = await stranger.json()
+assert(strangerSession.access_token, 'Missing second authenticated test user')
+await request(`/object/${privateBucket}/owned.txt`, { token: strangerSession.access_token, allowed: [400, 403, 404] })
 await request(`/object/${privateBucket}/denied.txt`, { token: anon, method: 'POST', body: 'denied', headers: { 'Content-Type': 'text/plain' }, allowed: [400, 403] })
 await request(`/object/${privateBucket}/folder/hello.txt`, { token: user, allowed: [400, 403, 404] })
 assert.equal(await (await request(`/object/public/${publicBucket}/folder/hello.txt`, { token: null })).text(), content)
