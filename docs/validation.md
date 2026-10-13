@@ -23,12 +23,21 @@ Validated on the development Windows desktop on 2026-10-12, with desktop install
 
 - Official Supabase logos now identify the Windows setup, desktop launcher, uninstaller, manager page, favicons and README. Six unchanged upstream PNG sizes are packaged into the Windows EXE icon. Launcher and uninstall previews were checked at the current Windows display scale; installer regression checks pass. The branded archive passes SHA-256 verification for all 112,980 packaged files. The prior installed version was absent, so this branding update supplies a rebuilt installer without reinstalling the app. Cleanup of the incomplete branding staging directory in the user installation versions folder was blocked by automatic approval review.
 
+## Updated desktop installation checks — 2026-10-13
+
+- The branded EXE's `--verify-install` mode successfully extracted and checked all 112,980 files into the real current-user installation directory and restored runtime junctions. An initial normal GUI attempt rolled back, and a later repeat GUI attempt exited before startup without a new error log; a complete GUI installation flow remains unverified. Setup now persists caught failures to `%LOCALAPPDATA%\SupabaseLocal\setup-error.log`.
+- The installed desktop EXE started all six available native services. After graceful shutdown, launching the actual `Supabase Local.lnk` started the same six services. Both Start menu shortcut targets, EXE icons, and the actual Installed apps uninstall command passed checks.
+- Real upstream Studio rendered in the browser. Its SQL editor executed `select version() as postgres_version, 1 + 1 as launch_test;` and returned PostgreSQL 17.6 on x86_64-windows and `2`.
+- The shipped uninstaller worker ran against the real installation with project deletion disabled. It removed the version directory, both shortcuts and the Installed apps registration; all 1,234 project files retained their exact pre-uninstall SHA-256 hashes. Deferred cleanup removed the temporary worker directory.
+- Program files were restored from a temporary validation cache outside the installation root (project data excluded). The shipped EXE then successfully reverified the entire restored payload and recreated runtime links. The runtime is present, but final shortcut registration and GUI relaunch were rejected by automatic approval review with only `blocked by policy`. At the end of this check the app is stopped and the Start menu/Installed apps entries remain removed. Run the updated setup EXE normally to finish registration and launch.
+- The shipped worker and shortcuts were tested through process/CLI automation; native Windows UI automation was unavailable, so the uninstall button and Windows Settings UI were not clicked. Initial installation and full repeat-install verification were slow on this desktop; this does not constitute a clean-VM installation test.
+
 ## Artifact
 
 `SupabaseLocal.Setup.exe` SHA-256:
 
 ```text
-66cdba1092bd1c1eadd435a42705bea04f044d5efd598893524a0c8f3fd0e265
+ac2afbf1ddf60b809424d6c19182f905863d9854a41dbd8831efb3615d148b3a
 ```
 
 The generated executable is not stored in Git. Build it with `scripts/build-native.ps1`, or use the local installer deliverable supplied with this milestone.
