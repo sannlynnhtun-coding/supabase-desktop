@@ -18,6 +18,8 @@ Target: Windows 10/11 x64 and NTFS. If the required Microsoft Visual C++ runtime
 
 Setup creates **Supabase Local** and **Uninstall Supabase Local** entries in your Windows Start menu. After installation, search Start for **Supabase Local** to open the installed desktop app; you do not need to keep the downloaded setup EXE. Installation is for the current Windows user.
 
+The bundled runtime is large, so allow time for the first installation and integrity checks. Later starts from the Start menu reuse the installed files.
+
 To uninstall, close Supabase Local and use **Settings → Apps → Installed apps → Supabase Local → Uninstall**, or its Start menu uninstall entry. Uninstall removes application versions and shortcuts while keeping project data by default. Selecting **Also permanently delete my local project data** requires an additional confirmation. Reinstalling can reuse retained data.
 
 The installer executable is a generated artifact under `artifacts/installer`, not committed into Git.
