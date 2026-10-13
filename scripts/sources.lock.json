@@ -3,9 +3,13 @@
   "pgmeta": { "repository": "https://github.com/supabase/postgres-meta.git", "revision": "ecc19497dcfcb4dc6a83d02e49d812f747cbf981" },
   "auth": { "repository": "https://github.com/supabase/auth.git", "revision": "4eee58f296d9698a1c2c0ae14d7a0b379c7622d3" },
   "storage": { "repository": "https://github.com/supabase/storage.git", "revision": "873c19acd4ac0eb8212495337068fed9e2dd3660" },
+  "realtime": { "repository": "https://github.com/supabase/realtime.git", "revision": "cd952f26787d764b357eec01568f680137756293" },
   "downloads": {
     "node": { "url": "https://nodejs.org/dist/v22.16.0/node-v22.16.0-win-x64.zip", "sha256": "21c2d9735c80b8f86dab19305aa6a9f6f59bbc808f68de3eef09d5832e3bfbbbd" },
     "nodeStorage": { "url": "https://nodejs.org/dist/v24.15.0/node-v24.15.0-win-x64.zip", "sha256": "cc5149eabd53779ce1e7bdc5401643622d0c7e6800ade18928a767e940bb0e62" },
+    "erlang": { "url": "https://github.com/erlang/otp/releases/download/OTP-27.3.4.18/otp_win64_27.3.4.18.zip", "sha256": "2af5d35d521211c16e9fa31b23f76e44b7b3284a27c6c1295fbeb382d2ff211f" },
+    "elixir": { "url": "https://github.com/elixir-lang/elixir/releases/download/v1.18.4/elixir-otp-27.zip", "sha256": "5be18f35e329f7c5914a80dd9f323d7bbb144616df1ed16f6f0862a1900b4bb5" },
+    "rebar": { "url": "https://builds.hex.pm/installs/1.18.3/rebar3-3.24.0-otp-27", "sha256": "17b83296517b53ab70f362306de95493151fa63e61bbae8b852769735937d965" },
     "postgres": { "url": "https://get.enterprisedb.com/postgresql/postgresql-17.6-1-windows-x64-binaries.zip", "sha256": "d378882abd001a186735acd6f6ba716bca6ccd192e800412d4fd15ed25376b3e" },
     "postgrest": { "url": "https://github.com/PostgREST/postgrest/releases/download/v16.4/postgrest-v16.4-windows-x86-64.zip", "sha256": "29a5b56e5a09b7168bb552ef14aa7ade40bf0a81dd0687cffa86610187b89d78" },
     "go": { "url": "https://go.dev/dl/go1.27.2.windows-amd64.zip", "sha256": "1314008898bd40df77af4b014f777f08873dbdfbcd3d92308728ee03304fe04f" }
