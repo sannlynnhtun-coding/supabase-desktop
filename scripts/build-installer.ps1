@@ -9,12 +9,16 @@ $zip = Join-Path $repo "work/payload-$buildId.zip"
 $output = Join-Path $repo 'artifacts/installer'
 & dotnet publish "$repo/src/SupabaseLocal/SupabaseLocal.csproj" -c Release -r win-x64 --self-contained true -o $payloadRoot
 if ($LASTEXITCODE -ne 0) { throw 'Manager publish failed' }
+$appOutput = Join-Path $repo "work/app-$buildId"
+& dotnet publish "$repo/src/SupabaseLocal.App/SupabaseLocal.App.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o $appOutput
+if ($LASTEXITCODE -ne 0) { throw 'Desktop app publish failed' }
+Copy-Item -LiteralPath "$appOutput/SupabaseLocal.App.exe" -Destination $payloadRoot
 & node "$repo/scripts/copy-runtime.mjs" $runtimePath "$payloadRoot/runtime"
 if ($LASTEXITCODE -ne 0) { throw 'Runtime payload copy failed' }
 & node "$repo/scripts/create-manifest.mjs" $payloadRoot
 if ($LASTEXITCODE -ne 0) { throw 'Payload manifest generation failed' }
-Add-Type -AssemblyName System.IO.Compression.FileSystem
-[IO.Compression.ZipFile]::CreateFromDirectory($payloadRoot, $zip, [IO.Compression.CompressionLevel]::Optimal, $false)
+& dotnet run --project "$repo/tools/PayloadArchive" -c Release -- $payloadRoot $zip
+if ($LASTEXITCODE -ne 0) { throw 'Verified payload archive failed' }
 & dotnet publish "$repo/src/SupabaseLocal.Setup/SupabaseLocal.Setup.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true "-p:PayloadPath=$zip" -o $output
 if ($LASTEXITCODE -ne 0) { throw 'Installer publish failed' }
 $installer = Join-Path $output 'SupabaseLocal.Setup.exe'

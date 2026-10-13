@@ -13,8 +13,14 @@ internal sealed class SetupWindow : Form
     private Process? manager;
     private bool closing;
     private bool installing = true;
-    public SetupWindow()
+    private readonly bool installed;
+    private FileStream? launcherLock;
+    private readonly string? verificationData;
+    public SetupWindow(bool installed = false, string? verificationData = null)
     {
+        this.installed = installed;
+        this.verificationData = verificationData;
+        if (verificationData is not null) ShowInTaskbar = false;
         Text = "Supabase Local — Native Windows";
         ClientSize = new Size(580, 230);
         StartPosition = FormStartPosition.CenterScreen;
@@ -53,12 +59,16 @@ internal sealed class SetupWindow : Form
         try
         {
             await Prerequisites.EnsureAsync(text => message.Text = text);
-            var directory = await Task.Run(() => PayloadInstaller.Install(new Progress<string>(text => BeginInvoke(() => message.Text = text))));
+            Directory.CreateDirectory(InstallationScope.Current.Root);
+            launcherLock = new FileStream(Path.Combine(InstallationScope.Current.Root, "launcher.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            var directory = installed ? AppContext.BaseDirectory : await Task.Run(() => PayloadInstaller.Install(new Progress<string>(text => BeginInvoke(() => message.Text = text))));
+            if (!installed) WindowsInstallation.Register(directory, InstallationScope.Current);
             var info = new ProcessStartInfo(Path.Combine(directory, "SupabaseLocal.exe")) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = directory };
             info.Environment["LauncherToken"] = token;
             info.Environment["RuntimeRoot"] = Path.Combine(directory, "runtime");
+            info.Environment["DataRoot"] = verificationData ?? Path.Combine(InstallationScope.Current.Root, "data");
             manager = Process.Start(info) ?? throw new InvalidOperationException("Could not start the manager.");
-            for (int attempt = 0; attempt < 180; attempt++)
+            for (int attempt = 0; attempt < 300; attempt++)
             {
                 if (manager.HasExited) throw new InvalidOperationException("Manager exited. Check for conflicting ports or another open launcher.");
                 try
@@ -71,7 +81,12 @@ internal sealed class SetupWindow : Form
                         if (status.StudioUrl is not null)
                         {
                             open.Enabled = true;
-                            Browse(status.StudioUrl);
+                            if (verificationData is null) Browse(status.StudioUrl);
+                            else
+                            {
+                                await File.WriteAllTextAsync(Path.Combine(verificationData, "launcher-verification.json"), System.Text.Json.JsonSerializer.Serialize(status));
+                                BeginInvoke(() => Close());
+                            }
                             return;
                         }
                     }
@@ -80,16 +95,20 @@ internal sealed class SetupWindow : Form
                 catch (TaskCanceledException) { }
                 await Task.Delay(1000);
             }
-            throw new TimeoutException("Services did not start within three minutes. Check logs in %LOCALAPPDATA%\\SupabaseLocal\\data.");
+            throw new TimeoutException("Services did not start within five minutes. Check logs in %LOCALAPPDATA%\\SupabaseLocal\\data.");
         }
-        catch (Exception ex) { message.Text = "Setup could not finish:\n" + ex.Message; }
+        catch (Exception ex)
+        {
+            message.Text = "Setup could not finish:\n" + ex.Message;
+            if (verificationData is not null) { Environment.ExitCode = 1; BeginInvoke(() => Close()); }
+        }
         finally { installing = false; }
     }
     private static void Browse(string url) => Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-    private sealed record Status(string State, string Message, string? StudioUrl);
+    private sealed record Status(string State, string Message, string? StudioUrl, string[] Available);
     protected override void Dispose(bool disposing)
     {
-        if (disposing) { manager?.Dispose(); http.Dispose(); }
+        if (disposing) { manager?.Dispose(); http.Dispose(); launcherLock?.Dispose(); }
         base.Dispose(disposing);
     }
 }

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType><TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><Version>0.2.0</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../SupabaseLocal.Setup/SetupWindow.cs" Link="SetupWindow.cs" />
+    <Compile Include="../SupabaseLocal.Setup/Prerequisites.cs" Link="Prerequisites.cs" />
+    <Compile Include="../SupabaseLocal.Setup/PayloadInstaller.cs" Link="PayloadInstaller.cs" />
+    <Compile Include="../Shared/RuntimeLinks.cs" Link="RuntimeLinks.cs" />
+    <Compile Include="../Shared/WindowsInstallation.cs" Link="WindowsInstallation.cs" />
+  </ItemGroup>
+</Project>

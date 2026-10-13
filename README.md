@@ -16,6 +16,10 @@ Keep the launcher open while working. Closing it stops its services gracefully. 
 
 Target: Windows 10/11 x64 and NTFS. If the required Microsoft Visual C++ runtime is absent, the launcher downloads a checksum-pinned package from Microsoft and requests the normal Windows administrator prompt. That first prerequisite installation needs internet access and can require a restart. Redistribution of that Microsoft package is not included in this repository or payload.
 
+Setup creates **Supabase Local** and **Uninstall Supabase Local** entries in your Windows Start menu. After installation, search Start for **Supabase Local** to open the installed desktop app; you do not need to keep the downloaded setup EXE. Installation is for the current Windows user.
+
+To uninstall, close Supabase Local and use **Settings → Apps → Installed apps → Supabase Local → Uninstall**, or its Start menu uninstall entry. Uninstall removes application versions and shortcuts while keeping project data by default. Selecting **Also permanently delete my local project data** requires an additional confirmation. Reinstalling can reuse retained data.
+
 The installer executable is a generated artifact under `artifacts/installer`, not committed into Git.
 
 ## Verified scope

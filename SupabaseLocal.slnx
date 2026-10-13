@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/SupabaseLocal.App/SupabaseLocal.App.csproj" />
     <Project Path="src/SupabaseLocal.Setup/SupabaseLocal.Setup.csproj" />
     <Project Path="src/SupabaseLocal/SupabaseLocal.csproj" />
   </Folder>
