@@ -1,5 +1,7 @@
 # Supabase Local for Windows
 
+<img src="src/Shared/Branding/supabase-logo.svg" alt="Supabase logo" width="48" height="50">
+
 An experimental native Windows port of upstream Supabase services, with a C#/.NET 10 installer and ASP.NET Core manager. No Docker or WSL2.
 
 ## Runtime decision

@@ -21,12 +21,14 @@ Validated on the development Windows desktop on 2026-10-12, with desktop install
 - Actual Start menu shortcuts target the installed desktop EXE, and the current-user Installed apps entry contains its quoted uninstall command. Isolated installer checks verify repeat registration, rejection while the desktop app is running, deletion of internal/external junctions without following targets, default data preservation, explicit project-data removal and removal of shortcuts/registry entries. The real deferred-cleanup PowerShell script also passes a private temporary-folder check.
 - Realtime v2.102.3 builds into a native Windows release with checksum-pinned Erlang/Elixir/Rebar and an unchanged upstream dependency lock. It is excluded from the installer pending runtime and replication validation.
 
+- Official Supabase logos now identify the Windows setup, desktop launcher, uninstaller, manager page, favicons and README. Six unchanged upstream PNG sizes are packaged into the Windows EXE icon. Launcher and uninstall previews were checked at the current Windows display scale; installer regression checks pass. The branded archive passes SHA-256 verification for all 112,980 packaged files. The prior installed version was absent, so this branding update supplies a rebuilt installer without reinstalling the app. Cleanup of the incomplete branding staging directory in the user installation versions folder was blocked by automatic approval review.
+
 ## Artifact
 
 `SupabaseLocal.Setup.exe` SHA-256:
 
 ```text
-82d8d9ec022d07c259c41d273ce837b4d6cc377fc73cc184a43ed748556e3c3b
+66cdba1092bd1c1eadd435a42705bea04f044d5efd598893524a0c8f3fd0e265
 ```
 
 The generated executable is not stored in Git. Build it with `scripts/build-native.ps1`, or use the local installer deliverable supplied with this milestone.

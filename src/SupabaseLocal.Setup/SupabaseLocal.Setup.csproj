@@ -7,9 +7,15 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <Version>0.2.0</Version>
+    <ApplicationIcon>../Shared/Branding/supabase.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup><Compile Include="../Shared/RuntimeLinks.cs" Link="RuntimeLinks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../Shared/WindowsInstallation.cs" Link="WindowsInstallation.cs" /></ItemGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/AppBranding.cs" Link="AppBranding.cs" />
+    <EmbeddedResource Include="../Shared/Branding/supabase.ico" LogicalName="SupabaseLocal.Branding.Icon" />
+    <EmbeddedResource Include="../Shared/Branding/supabase-logo.png" LogicalName="SupabaseLocal.Branding.Logo" />
+  </ItemGroup>
   <ItemGroup Condition="Exists('$(PayloadPath)')">
     <EmbeddedResource Include="$(PayloadPath)" LogicalName="SupabaseLocal.Payload.zip" />
   </ItemGroup>

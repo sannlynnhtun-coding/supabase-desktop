@@ -16,18 +16,21 @@ internal sealed class SetupWindow : Form
     private readonly bool installed;
     private FileStream? launcherLock;
     private readonly string? verificationData;
-    public SetupWindow(bool installed = false, string? verificationData = null)
+    public SetupWindow(bool installed = false, string? verificationData = null, bool brandingPreview = false)
     {
         this.installed = installed;
         this.verificationData = verificationData;
         if (verificationData is not null) ShowInTaskbar = false;
         Text = "Supabase Local — Native Windows";
-        ClientSize = new Size(580, 230);
+        Icon = AppBranding.WindowIcon();
+        ClientSize = new Size(580, 330);
         StartPosition = FormStartPosition.CenterScreen;
         Controls.Add(message);
         Controls.Add(open);
+        Controls.Add(AppBranding.Header());
         open.Click += (_, _) => Browse("http://127.0.0.1:54323");
-        Shown += async (_, _) => await InstallAndStartAsync();
+        if (!brandingPreview) Shown += async (_, _) => await InstallAndStartAsync();
+        else installing = false;
         FormClosing += async (_, e) =>
         {
             if (installing) { e.Cancel = true; message.Text = "Finishing installation before closing…"; return; }
@@ -108,7 +111,7 @@ internal sealed class SetupWindow : Form
     private sealed record Status(string State, string Message, string? StudioUrl, string[] Available);
     protected override void Dispose(bool disposing)
     {
-        if (disposing) { manager?.Dispose(); http.Dispose(); launcherLock?.Dispose(); }
+        if (disposing) { manager?.Dispose(); http.Dispose(); launcherLock?.Dispose(); Icon?.Dispose(); }
         base.Dispose(disposing);
     }
 }

@@ -11,9 +11,11 @@ internal sealed class UninstallWindow : Form
     public UninstallWindow(int? parent = null, bool removeData = false)
     {
         Text = "Uninstall Supabase Local";
-        ClientSize = new Size(580, 250);
+        Icon = AppBranding.WindowIcon();
+        ClientSize = new Size(580, 350);
         StartPosition = FormStartPosition.CenterScreen;
         Controls.Add(status); Controls.Add(purge); Controls.Add(action);
+        Controls.Add(AppBranding.Header());
         FormClosing += (_, e) => e.Cancel = busy;
         if (parent is not null)
         {

@@ -2,7 +2,21 @@ using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text.Json;
 
-if (args.Length != 2) throw new ArgumentException("Usage: PayloadArchive <prepared-payload> <new-zip>");
+if (args is ["--verify", var archive])
+{
+    using var package = ZipFile.OpenRead(Path.GetFullPath(archive));
+    using var reader = new StreamReader(package.GetEntry("manifest.json")!.Open());
+    var files = JsonSerializer.Deserialize<Dictionary<string, string>>(reader.ReadToEnd())!;
+    foreach (var (name, expected) in files)
+    {
+        using var entry = (package.GetEntry(name) ?? throw new InvalidDataException("Missing file: " + name)).Open();
+        if (!Convert.ToHexString(SHA256.HashData(entry)).Equals(expected, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("Hash mismatch: " + name);
+    }
+    Console.WriteLine($"Verified {files.Count} packaged files");
+    return;
+}
+if (args.Length != 2) throw new ArgumentException("Usage: PayloadArchive <prepared-payload> <new-zip> | --verify <zip>");
 var root = Path.GetFullPath(args[0]);
 var manifest = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(Path.Combine(root, "manifest.json"))) ?? throw new InvalidDataException("Invalid manifest");
 using var output = new FileStream(Path.GetFullPath(args[1]), FileMode.CreateNew);
