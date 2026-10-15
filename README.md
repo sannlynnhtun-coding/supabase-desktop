@@ -2,7 +2,9 @@
 
 <img src="src/Shared/Branding/supabase-logo.svg" alt="Supabase logo" width="48" height="50">
 
-An experimental native Windows port of upstream Supabase services, with a C#/.NET 10 installer and ASP.NET Core manager. No Docker or WSL2.
+An experimental native Windows port of upstream Supabase services, with a Rust / GPUI Kit installer and ASP.NET Core manager. No Docker or WSL2.
+
+The Rust setup lives in `src/SupabaseLocal.Setup.Rust`. It uses [GPUI Kit](https://gpui-kit.com/) for its desktop UI and retains the existing C# desktop launcher, uninstaller and service manager. See [Rust installer development](docs/rust-installer.md) for build and verification steps. The original C# setup is retained as a migration reference.
 
 ## Runtime decision
 
@@ -12,9 +14,9 @@ The current milestone runs the real Supabase Studio, upstream postgres-meta, Sup
 
 ## Use the installer
 
-Open `SupabaseLocal.Setup.exe`. It checks Windows prerequisites, installs a verified bundled runtime under `%LOCALAPPDATA%/SupabaseLocal/versions`, initializes the database, starts the native processes and opens real Supabase Studio at `http://127.0.0.1:54323`.
+Open `SupabaseLocal.Setup.exe` and select **Install Supabase Local**. The Rust installer checks Windows prerequisites and installs a verified bundled runtime under `%LOCALAPPDATA%/SupabaseLocal/versions`. Select **Open Supabase Local** after installation; the desktop launcher initializes the database, starts the native processes and opens real Supabase Studio at `http://127.0.0.1:54323`.
 
-Keep the launcher open while working. Closing it stops its services gracefully. Open the same executable again to restart the same project. The database, generated secrets, SQL snippets and logs are retained under `%LOCALAPPDATA%/SupabaseLocal/data`. No global PATH modification is needed. The .NET and Node runtimes are bundled; users do not need SDKs, Git or npm.
+Keep the installed desktop launcher open while working. Closing it stops its services gracefully. Open **Supabase Local** from Start to restart the same project. The database, generated secrets, SQL snippets and logs are retained under `%LOCALAPPDATA%/SupabaseLocal/data`. No global PATH modification is needed. The .NET and Node runtimes are bundled; users do not need SDKs, Git or npm.
 
 Target: Windows 10/11 x64 and NTFS. If the required Microsoft Visual C++ runtime is absent, the launcher downloads a checksum-pinned package from Microsoft and requests the normal Windows administrator prompt. That first prerequisite installation needs internet access and can require a restart. Redistribution of that Microsoft package is not included in this repository or payload.
 
@@ -48,7 +50,7 @@ References:
 
 ## Development
 
-For development, install the .NET 10 SDK, Git and Node 24/npm. To build only the manager:
+For development, install the Rust MSVC toolchain, Visual Studio C++ Build Tools, CMake, the .NET 10 SDK, Git and Node 24/npm. To build only the manager:
 
 ```powershell
 dotnet build
@@ -81,4 +83,4 @@ See `docs/native-windows.md` for remaining service-port work.
 
 Use Conventional Commits for each completed task, such as `chore: scaffold ASP.NET Core 10 application` and `feat: add local stack management`.
 
-Git remote: https://github.com/sannlynnhtun-coding/supabase-local
+Git remote: https://github.com/sannlynnhtun-coding/supabase-local-installer-with-rust

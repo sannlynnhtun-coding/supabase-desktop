@@ -19,7 +19,16 @@ if ($LASTEXITCODE -ne 0) { throw 'Runtime payload copy failed' }
 if ($LASTEXITCODE -ne 0) { throw 'Payload manifest generation failed' }
 & dotnet run --project "$repo/tools/PayloadArchive" -c Release -- $payloadRoot $zip
 if ($LASTEXITCODE -ne 0) { throw 'Verified payload archive failed' }
-& dotnet publish "$repo/src/SupabaseLocal.Setup/SupabaseLocal.Setup.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true "-p:PayloadPath=$zip" -o $output
+$previousPayload = $env:SUPABASE_PAYLOAD
+try {
+    $env:SUPABASE_PAYLOAD = $zip
+    $cargo = Get-Command cargo -ErrorAction SilentlyContinue
+    if (!$cargo) { $cargo = Get-Command "$env:USERPROFILE/.cargo/bin/cargo.exe" }
+    & $cargo.Source build --release --locked --manifest-path "$repo/src/SupabaseLocal.Setup.Rust/Cargo.toml"
+    if ($LASTEXITCODE -ne 0) { throw 'Rust installer build failed' }
+    New-Item -ItemType Directory -Force -Path $output | Out-Null
+    Copy-Item -LiteralPath "$repo/src/SupabaseLocal.Setup.Rust/target/release/supabase-local-setup.exe" -Destination (Join-Path $output 'SupabaseLocal.Setup.exe') -Force
+} finally { $env:SUPABASE_PAYLOAD = $previousPayload }
 if ($LASTEXITCODE -ne 0) { throw 'Installer publish failed' }
 $installer = Join-Path $output 'SupabaseLocal.Setup.exe'
 $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()

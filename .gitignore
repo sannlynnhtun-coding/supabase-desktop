@@ -486,3 +486,6 @@ work/
 artifacts/
 runtime/
 
+
+# Rust build output
+**/target/
