@@ -16,7 +16,7 @@ Confirmed actions are gated while in progress, preventing duplicate restarts or 
 
 `src/SupabaseLocal.Setup.Rust/src/app.rs` owns the GPUI window, tray menu and confirmation dialogs. `app_runtime.rs` owns the manager process and authenticated loopback shutdown requests. Blocking startup/status/shutdown work runs on a background thread. Restart keeps the project database, files and generated secrets.
 
-The ASP.NET Core gateway/service manager remains unchanged. The original C# uninstaller is bundled separately as `SupabaseLocal.Uninstall.exe`; the Rust launcher forwards the existing uninstall entry to it. The original C# launcher source remains as a reference, but packaging installs the Rust launcher.
+The ASP.NET Core gateway/service manager remains unchanged. The Rust / GPUI Kit uninstaller is bundled as `SupabaseLocal.Uninstall.exe`; the Rust launcher forwards the existing uninstall entry to it. It runs from a checked private temporary copy so the installed application can be removed. A small hidden PowerShell helper removes that temporary copy after it exits. The original C# launcher source remains as a reference, but packaging installs the Rust launcher.
 
 The normal `scripts/build-installer.ps1` builds and packages the Rust app. To reuse an already verified service archive without copying 112,980 runtime files again:
 

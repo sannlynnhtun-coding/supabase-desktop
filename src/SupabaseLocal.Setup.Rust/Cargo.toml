@@ -11,6 +11,10 @@ path = "src/main.rs"
 name = "supabase-local-app"
 path = "src/app.rs"
 
+[[bin]]
+name = "supabase-desktop-uninstall"
+path = "src/uninstall.rs"
+
 [dependencies]
 anyhow = "1"
 gpui-kit = "=0.7.3"
@@ -25,6 +29,7 @@ ureq = { version = "3", default-features = false, features = ["json"] }
 tray-icon = { version = "0.21", default-features = false }
 getrandom = "0.3"
 raw-window-handle = "0.6"
+winreg = "=0.56.0"
 
 [build-dependencies]
 embed-resource = "=3.0.12"

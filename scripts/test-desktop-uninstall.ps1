@@ -19,11 +19,11 @@ foreach ($file in Get-ChildItem -LiteralPath $data -File -Recurse) {
     $before[[IO.Path]::GetRelativePath($data,$file.FullName)] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
 }
 if ($before.Count -eq 0) { throw 'No project data exists to verify preservation' }
-$temporary = Join-Path ([IO.Path]::GetTempPath()) ('SupabaseLocal-Uninstall-'+[Guid]::NewGuid().ToString('N'))
+$temporary = Join-Path ([IO.Path]::GetTempPath()) ('SupabaseDesktop-Uninstall-'+[Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $temporary | Out-Null
-$workerPath = Join-Path $temporary 'SupabaseLocal.App.exe'
+$workerPath = Join-Path $temporary 'SupabaseDesktop.Uninstall.exe'
 $uninstaller = Join-Path ([IO.Path]::GetDirectoryName($shortcut.target)) 'SupabaseLocal.Uninstall.exe'
-if (!(Test-Path -LiteralPath $uninstaller)) { $uninstaller = $shortcut.target }
+if (!(Test-Path -LiteralPath $uninstaller)) { throw 'Bundled Rust uninstaller is missing' }
 Copy-Item -LiteralPath $uninstaller -Destination $workerPath
 # Exercise the shipped worker and its real current-user installation scope; false keeps data.
 # The original launcher is already stopped, so the worker takes the normal parent-exited path.

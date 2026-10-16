@@ -2,38 +2,30 @@ using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text.Json;
 
-if (args is ["--replace-desktop", var sourceArchive, var rustDesktop, var outputArchive])
+if (args is ["--refresh-branding", var sourceBundle, var desktop, var uninstaller, var dashboard, var refreshedBundle])
 {
-    File.Copy(Path.GetFullPath(sourceArchive), Path.GetFullPath(outputArchive), overwrite: false);
-    using var package = ZipFile.Open(Path.GetFullPath(outputArchive), ZipArchiveMode.Update);
+    File.Copy(Path.GetFullPath(sourceBundle), Path.GetFullPath(refreshedBundle), overwrite: false);
+    using var package = ZipFile.Open(Path.GetFullPath(refreshedBundle), ZipArchiveMode.Update);
     var manifestEntry = package.GetEntry("manifest.json") ?? throw new InvalidDataException("Missing manifest");
     Dictionary<string, string> files;
     using (var reader = new StreamReader(manifestEntry.Open()))
         files = JsonSerializer.Deserialize<Dictionary<string, string>>(reader.ReadToEnd())!;
-    const string desktopName = "SupabaseLocal.App.exe";
-    const string uninstallName = "SupabaseLocal.Uninstall.exe";
-    var desktopEntry = package.GetEntry(desktopName) ?? throw new InvalidDataException("Missing desktop app");
-    if (package.GetEntry(uninstallName) is null)
+    foreach (var (name, path) in new[] { ("SupabaseLocal.App.exe", desktop), ("SupabaseLocal.Uninstall.exe", uninstaller), ("wwwroot/index.html", dashboard) })
     {
-        using var oldDesktop = new MemoryStream();
-        using (var input = desktopEntry.Open()) input.CopyTo(oldDesktop);
-        var bytes = oldDesktop.ToArray();
-        var hash = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
-        if (!hash.Equals(files[desktopName], StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("Existing desktop checksum mismatch");
-        using (var uninstallOutput = package.CreateEntry(uninstallName, CompressionLevel.Fastest).Open()) uninstallOutput.Write(bytes);
-        files[uninstallName] = hash;
-    }
-    desktopEntry.Delete();
-    using (var input = File.OpenRead(Path.GetFullPath(rustDesktop)))
-    {
-        files[desktopName] = Convert.ToHexString(SHA256.HashData(input)).ToLowerInvariant();
+        var existing = package.GetEntry(name) ?? throw new InvalidDataException("Missing entry: " + name);
+        using (var old = existing.Open())
+            if (!Convert.ToHexString(SHA256.HashData(old)).Equals(files[name], StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("Existing checksum mismatch: " + name);
+        existing.Delete();
+        using var input = File.OpenRead(Path.GetFullPath(path));
+        files[name] = Convert.ToHexString(SHA256.HashData(input)).ToLowerInvariant();
         input.Position = 0;
-        using var desktopOutput = package.CreateEntry(desktopName, CompressionLevel.Fastest).Open();
-        input.CopyTo(desktopOutput);
+        using var refreshedEntry = package.CreateEntry(name, CompressionLevel.Fastest).Open();
+        input.CopyTo(refreshedEntry);
     }
     manifestEntry.Delete();
-    using (var manifestOutput = package.CreateEntry("manifest.json", CompressionLevel.Fastest).Open()) JsonSerializer.Serialize(manifestOutput, files);
-    Console.WriteLine($"Updated verified desktop entries; retained {files.Count} manifest files.");
+    using (var refreshedManifest = package.CreateEntry("manifest.json", CompressionLevel.Fastest).Open()) JsonSerializer.Serialize(refreshedManifest, files);
+    Console.WriteLine($"Refreshed Rust desktop, Rust uninstaller and branded dashboard; retained {files.Count} manifest files.");
     return;
 }
 
@@ -51,7 +43,7 @@ if (args is ["--verify", var archive])
     Console.WriteLine($"Verified {files.Count} packaged files");
     return;
 }
-if (args.Length != 2) throw new ArgumentException("Usage: PayloadArchive <prepared-payload> <new-zip> | --verify <zip>");
+if (args.Length != 2) throw new ArgumentException("Usage: PayloadArchive <prepared-payload> <new-zip> | --verify <zip> | --refresh-branding <zip> <Rust-desktop> <Rust-uninstaller> <dashboard> <new-zip>");
 var root = Path.GetFullPath(args[0]);
 var manifest = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(Path.Combine(root, "manifest.json"))) ?? throw new InvalidDataException("Invalid manifest");
 using var output = new FileStream(Path.GetFullPath(args[1]), FileMode.CreateNew);

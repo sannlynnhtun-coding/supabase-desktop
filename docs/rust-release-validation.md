@@ -1,5 +1,15 @@
 # Bundled Rust release validation
 
+## Supabase Desktop branding and Rust uninstaller rebuild
+
+The rebuilt `artifacts/installer/supabase-desktop/SupabaseDesktop.Setup.exe` is 680,248,596 bytes, SHA256 `53ed234cf2b020e290f7abb907c52ed59204ecdd22591dd3aad60e48b4a89e59`. Setup, desktop, tray, uninstaller and bundled dashboard use Supabase Desktop branding. The bundled uninstaller matches the Rust release executable byte for byte and has no CLR header. Production packaging no longer builds the C# uninstaller.
+
+All 13 Rust release-mode tests passed. The embedded payload passed extraction, repeat-install, tamper-rejection and data-preservation checks. Two manager cycles verified Studio SQL, Auth, REST, Storage, stable secrets and graceful shutdown. The packaged desktop passed native window/tray/confirmation rendering and a two-cycle restart/shutdown check. The packaged Rust uninstaller passed isolated ownership, launcher/manager lock rejection, junction and broken-junction removal, default data preservation, explicit data deletion, copied-worker cleanup, and native confirmation-dialog checks.
+
+Evidence is under `work/supabase-desktop-release-rebuild` and `work/supabase-desktop-packaged-uninstaller-checks`. These checks use disposable data and registry fixtures; they do not uninstall the current user's installation.
+
+## Earlier validation
+
 Validated on Windows x64 on 2026-10-16 using the complete `artifacts/runtime-storage-v1` runtime.
 
 - Installer: `artifacts/installer/SupabaseDesktop.Setup.exe`

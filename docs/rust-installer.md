@@ -1,6 +1,6 @@
 # Rust installer
 
-The setup executable and installed desktop launcher are implemented in `src/SupabaseLocal.Setup.Rust` with GPUI Kit 0.7.3. The native service manager, separate C# uninstaller, archive build tool, and upstream service builds retain their existing implementations. The original C# setup remains as a migration reference and for its existing packaging checks; the production packaging script builds Rust setup.
+The setup executable, installed desktop launcher and uninstaller are implemented in `src/SupabaseLocal.Setup.Rust` with GPUI Kit 0.7.3. The native service manager, archive build tool, and upstream service builds retain their existing implementations. The original C# setup remains as a migration reference and for its existing packaging checks; the production packaging script builds Rust setup.
 
 ## Build
 
@@ -19,7 +19,17 @@ Setup runs extraction and Windows integration on a worker thread and updates its
 
 Use `SupabaseDesktop.Setup.exe --verify-install <empty-test-directory>` to exercise an embedded payload without registering an installation or starting services. Verify repeat installation and tamper rejection before release. This command writes `verification-result.json` on success. Close the setup window only after installation completes; interruption can leave a version that will be verified on the next attempt.
 
-The installed Rust desktop launcher owns service startup, confirmed restart and shutdown, and the notification-area icon. It forwards uninstallation to the separate bundled C# uninstaller. See [Rust desktop launcher](rust-desktop.md) for its dashboard, controls and verification modes. The ASP.NET manager remains unchanged.
+The installed Rust desktop launcher owns service startup, confirmed restart and shutdown, and the notification-area icon. It forwards uninstallation to the bundled Rust / GPUI Kit uninstaller. See [Rust desktop launcher](rust-desktop.md) for its dashboard, controls and verification modes. The ASP.NET manager remains unchanged.
+
+The `supabase-desktop-uninstall` Rust binary is packaged as `SupabaseLocal.Uninstall.exe` for compatibility with existing launcher paths. Production packaging does not build or include the C# uninstaller. The Rust uninstaller checks installation ownership and running-process locks, removes application versions without following junctions, and preserves project data unless deletion is explicitly confirmed. It runs from a private temporary copy; a hidden PowerShell helper removes that copy after exit.
+
+Verify the actual shipped uninstaller, including its copied worker, deferred cleanup, native window and confirmation dialogs:
+
+```powershell
+./scripts/test-rust-uninstaller.ps1 -Uninstaller <installed-version>/SupabaseLocal.Uninstall.exe -Evidence work/rust-uninstaller-checks
+```
+
+These checks create disposable fixtures and isolated registry keys; they do not uninstall the current user's installation.
 
 `scripts/test-rust-release.ps1` tests the actual packaged executable in a fresh directory under `work`. It checks the release SHA256, embedded extraction, repeat verification, tamper rejection and data preservation; runs two manager integration cycles including real Studio SQL, Auth, REST and Storage; verifies the bundled desktop launcher's six-service startup and graceful shutdown; and checks native GPUI window creation and closing. The test requires the local service ports to be free. It retains its isolated test data and writes `release-test-result.json` alongside its logs. It does not register or uninstall the current user's existing installation.
 

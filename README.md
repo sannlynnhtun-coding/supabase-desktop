@@ -4,7 +4,7 @@
 
 An experimental native Windows port of upstream Supabase services, with a Rust / GPUI Kit installer and ASP.NET Core manager. No Docker or WSL2.
 
-The Rust setup lives in `src/SupabaseLocal.Setup.Rust`. Both the installer and desktop launcher use [GPUI Kit](https://gpui-kit.com/). The launcher provides service status, an activity log, a notification-area icon and confirmed Restart/Exit actions. The ASP.NET Core service manager and separate C# uninstaller remain bundled. See [Rust installer development](docs/rust-installer.md) for build and verification steps. The original C# setup is retained as a migration reference.
+The Rust setup lives in `src/SupabaseLocal.Setup.Rust`. The installer, desktop launcher and uninstaller use [GPUI Kit](https://gpui-kit.com/). The launcher provides service status, an activity log, a notification-area icon and confirmed Restart/Exit actions. The ASP.NET Core service manager remains bundled. The uninstaller is built in Rust and preserves project data by default. See [Rust installer development](docs/rust-installer.md) for build and verification steps. The original C# setup is retained as a migration reference.
 
 ## Runtime decision
 
