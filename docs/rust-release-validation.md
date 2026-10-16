@@ -52,3 +52,13 @@ All nine Rust tests pass, including temporary script execution, arguments with s
 - Current SHA256: `69bebb99ceae6e501d99cec04fc85fc11a08bcfe3271dd6f8ca8888de0868a5c`.
 - Evidence: `work/rust-install-fix-validation-20261016/installation-result.json` and adjacent logs.
 - This follow-up performed real current-user registration; the earlier isolated release run did not.
+
+## Live installation log (2026-10-16)
+
+The setup window now retains timestamped progress in an automatically scrolling log panel. It reports prerequisites, archive checks, file counts, runtime links, Windows registration, completion and detailed errors. All nine Rust tests and the packaged native-window render check pass.
+
+The earlier installer was open during packaging, so this build is available at `artifacts/installer/with-logs/SupabaseLocal.Setup.exe`. Close the earlier setup window and use this executable for the live log.
+
+- Log build size: 720,360,368 bytes.
+- SHA256: `e526726dc705115ed8a6b108ccc6f5a8fea769d3515ab96dd509bf0fbc59d7bd`.
+- UI evidence: `work/rust-install-log-ui.json`.

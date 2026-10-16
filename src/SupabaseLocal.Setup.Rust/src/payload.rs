@@ -174,6 +174,7 @@ pub fn install(bytes: &[u8], root: &Path, report: &impl Fn(String)) -> Result<Pa
                 ));
             }
         }
+        report("Checking native runtime links…".into());
         restore_links(&destination.join("runtime"))?;
         return Ok(destination);
     }
@@ -217,6 +218,7 @@ pub fn install(bytes: &[u8], root: &Path, report: &impl Fn(String)) -> Result<Pa
     }
     // Restore after the atomic move: junction targets must reference the final location.
     fs::rename(staging.path(), &destination)?;
+    report("Restoring native runtime links…".into());
     restore_links(&destination.join("runtime"))?;
     Ok(destination)
 }

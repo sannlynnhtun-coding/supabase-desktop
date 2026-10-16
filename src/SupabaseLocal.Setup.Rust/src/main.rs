@@ -10,23 +10,33 @@ use gpui_kit::{
     },
     *,
 };
-use std::{path::PathBuf, sync::mpsc, time::Duration};
+use std::{
+    path::PathBuf,
+    sync::mpsc,
+    time::{Duration, Instant},
+};
 
 struct Setup {
     logo: std::sync::Arc<RenderImage>,
     message: String,
     busy: bool,
     installed: Option<PathBuf>,
+    logs: Vec<String>,
+    log_started: Instant,
+    log_scroll: ScrollHandle,
 }
 
 fn install_for_user(report: &impl Fn(String)) -> anyhow::Result<PathBuf> {
+    report("Checking Microsoft C++ runtime…".into());
     windows::prerequisites()?;
+    report("Microsoft C++ runtime is ready.".into());
     let root = PathBuf::from(
         std::env::var_os("LOCALAPPDATA")
             .ok_or_else(|| anyhow::anyhow!("LOCALAPPDATA is unavailable"))?,
     )
     .join("SupabaseLocal");
     std::fs::create_dir_all(&root)?;
+    report("Checking for another running Supabase Local app…".into());
     let lock = std::fs::OpenOptions::new()
         .create(true)
         .truncate(false)
@@ -35,16 +45,35 @@ fn install_for_user(report: &impl Fn(String)) -> anyhow::Result<PathBuf> {
         .open(root.join("launcher.lock"))?;
     fs2::FileExt::try_lock_exclusive(&lock)
         .map_err(|_| anyhow::anyhow!("Close the running Supabase Local app before installing."))?;
+    report("Reading and verifying the bundled runtime archive…".into());
     let bytes = bundle::read()?;
+    report("Runtime archive checksum verified. Preparing application files…".into());
     let directory = payload::install(&bytes, &root, report)?;
+    report("Application files and runtime links are ready.".into());
+    report("Creating Start menu shortcuts and Installed apps entry…".into());
     windows::register(&directory, &root)?;
+    report("Windows registration completed.".into());
     Ok(directory)
 }
 
 impl Setup {
+    fn append_log(&mut self, message: String) {
+        let seconds = self.log_started.elapsed().as_secs();
+        self.logs.push(format!(
+            "[{:02}:{:02}] {message}",
+            seconds / 60,
+            seconds % 60
+        ));
+        self.log_scroll.scroll_to_bottom();
+    }
+
     fn install(&mut self, cx: &mut Context<Self>) {
         self.busy = true;
         self.message = "Checking Windows prerequisites…".into();
+        self.logs.clear();
+        self.log_started = Instant::now();
+        self.append_log("Starting installation. Existing project data will be preserved.".into());
+        cx.notify();
         let (tx, rx) = mpsc::channel();
         std::thread::spawn(move || {
             let result = install_for_user(&|message| {
@@ -59,14 +88,18 @@ impl Setup {
                 if this.update(cx, |this, cx| {
                     while let Ok(event) = rx.try_recv() {
                         match event {
-                            Ok(message) => this.message = message,
+                            Ok(message) => { this.message = message.clone(); this.append_log(message); }
                             Err(result) => {
                                 this.busy = false;
                                 finished = true;
                                 match result {
                                     Ok(path) => { this.installed = Some(path); this.message = "Installation complete. Open Supabase Local to start your services.".into(); }
-                                    Err(error) => this.message = format!("Setup could not finish: {error}"),
+                                    Err(error) => {
+                                        this.message = "Setup could not finish. See the installation log below.".into();
+                                        this.append_log(format!("ERROR: {error}"));
+                                    }
                                 }
+                                this.append_log(this.message.clone());
                             }
                         }
                         cx.notify();
@@ -85,7 +118,7 @@ impl Render for Setup {
             .size_full()
             .p_6()
             .font_family("Segoe UI")
-            .gap_6()
+            .gap_4()
             .bg(cx.theme().background)
             .text_color(cx.theme().foreground)
             .child(
@@ -114,7 +147,41 @@ impl Render for Setup {
             )
             .child("PostgreSQL · Studio · Auth · REST · Storage")
             .child("Installs for your Windows account. Existing project data is preserved.")
-            .child(div().flex_1().child(self.message.clone()))
+            .child(div().child(self.message.clone()))
+            .child(
+                div()
+                    .flex()
+                    .flex_col()
+                    .flex_1()
+                    .min_h(px(120.))
+                    .gap_2()
+                    .child(
+                        div()
+                            .text_sm()
+                            .text_color(cx.theme().muted_foreground)
+                            .child("Installation log"),
+                    )
+                    .child(
+                        div()
+                            .id("installation-log")
+                            .flex_1()
+                            .min_h_0()
+                            .overflow_y_scroll()
+                            .track_scroll(&self.log_scroll)
+                            .p_3()
+                            .rounded_md()
+                            .border_1()
+                            .border_color(cx.theme().border)
+                            .bg(cx.theme().muted)
+                            .font_family("Consolas")
+                            .text_sm()
+                            .children(
+                                self.logs
+                                    .iter()
+                                    .map(|line| div().mb_1().child(line.clone())),
+                            ),
+                    ),
+            )
             .child(
                 Button::new("install")
                     .primary()
@@ -130,6 +197,7 @@ impl Render for Setup {
                         if let Some(path) = &this.installed {
                             if let Err(e) = windows::launch(path) {
                                 this.message = e.to_string();
+                                this.append_log(this.message.clone());
                                 cx.notify();
                             }
                         } else if !this.busy {
@@ -190,7 +258,7 @@ fn main() -> anyhow::Result<()> {
                 show: !verify_ui,
                 window_bounds: Some(WindowBounds::Windowed(Bounds::centered(
                     None,
-                    size(px(680.), px(460.)),
+                    size(px(740.), px(620.)),
                     cx,
                 ))),
                 ..Default::default()
@@ -211,6 +279,9 @@ fn main() -> anyhow::Result<()> {
                     message: "Ready to install the bundled native runtime.".into(),
                     busy: false,
                     installed: None,
+                    logs: vec!["Ready. Select Install Supabase Local to begin.".into()],
+                    log_started: Instant::now(),
+                    log_scroll: ScrollHandle::new(),
                 });
                 let weak = view.downgrade();
                 window.on_window_should_close(cx, move |_, cx| {
