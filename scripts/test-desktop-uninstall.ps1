@@ -22,7 +22,9 @@ if ($before.Count -eq 0) { throw 'No project data exists to verify preservation'
 $temporary = Join-Path ([IO.Path]::GetTempPath()) ('SupabaseLocal-Uninstall-'+[Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $temporary | Out-Null
 $workerPath = Join-Path $temporary 'SupabaseLocal.App.exe'
-Copy-Item -LiteralPath $shortcut.target -Destination $workerPath
+$uninstaller = Join-Path ([IO.Path]::GetDirectoryName($shortcut.target)) 'SupabaseLocal.Uninstall.exe'
+if (!(Test-Path -LiteralPath $uninstaller)) { $uninstaller = $shortcut.target }
+Copy-Item -LiteralPath $uninstaller -Destination $workerPath
 # Exercise the shipped worker and its real current-user installation scope; false keeps data.
 # The original launcher is already stopped, so the worker takes the normal parent-exited path.
 $worker = Start-Process -FilePath $workerPath -ArgumentList '--uninstall-worker',$desktopId,'false' -PassThru

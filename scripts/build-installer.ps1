@@ -12,7 +12,12 @@ if ($LASTEXITCODE -ne 0) { throw 'Manager publish failed' }
 $appOutput = Join-Path $repo "work/app-$buildId"
 & dotnet publish "$repo/src/SupabaseLocal.App/SupabaseLocal.App.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o $appOutput
 if ($LASTEXITCODE -ne 0) { throw 'Desktop app publish failed' }
-Copy-Item -LiteralPath "$appOutput/SupabaseLocal.App.exe" -Destination $payloadRoot
+Copy-Item -LiteralPath "$appOutput/SupabaseLocal.App.exe" -Destination (Join-Path $payloadRoot 'SupabaseLocal.Uninstall.exe')
+$cargo = Get-Command cargo -ErrorAction SilentlyContinue
+if (!$cargo) { $cargo = Get-Command "$env:USERPROFILE/.cargo/bin/cargo.exe" }
+& $cargo.Source build --release --locked --manifest-path "$repo/src/SupabaseLocal.Setup.Rust/Cargo.toml" --bin supabase-local-app
+if ($LASTEXITCODE -ne 0) { throw 'Rust desktop app build failed' }
+Copy-Item -LiteralPath "$repo/src/SupabaseLocal.Setup.Rust/target/release/supabase-local-app.exe" -Destination (Join-Path $payloadRoot 'SupabaseLocal.App.exe')
 & node "$repo/scripts/copy-runtime.mjs" $runtimePath "$payloadRoot/runtime"
 if ($LASTEXITCODE -ne 0) { throw 'Runtime payload copy failed' }
 & node "$repo/scripts/create-manifest.mjs" $payloadRoot

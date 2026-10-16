@@ -2,6 +2,41 @@ using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text.Json;
 
+if (args is ["--replace-desktop", var sourceArchive, var rustDesktop, var outputArchive])
+{
+    File.Copy(Path.GetFullPath(sourceArchive), Path.GetFullPath(outputArchive), overwrite: false);
+    using var package = ZipFile.Open(Path.GetFullPath(outputArchive), ZipArchiveMode.Update);
+    var manifestEntry = package.GetEntry("manifest.json") ?? throw new InvalidDataException("Missing manifest");
+    Dictionary<string, string> files;
+    using (var reader = new StreamReader(manifestEntry.Open()))
+        files = JsonSerializer.Deserialize<Dictionary<string, string>>(reader.ReadToEnd())!;
+    const string desktopName = "SupabaseLocal.App.exe";
+    const string uninstallName = "SupabaseLocal.Uninstall.exe";
+    var desktopEntry = package.GetEntry(desktopName) ?? throw new InvalidDataException("Missing desktop app");
+    if (package.GetEntry(uninstallName) is null)
+    {
+        using var oldDesktop = new MemoryStream();
+        using (var input = desktopEntry.Open()) input.CopyTo(oldDesktop);
+        var bytes = oldDesktop.ToArray();
+        var hash = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
+        if (!hash.Equals(files[desktopName], StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("Existing desktop checksum mismatch");
+        using (var uninstallOutput = package.CreateEntry(uninstallName, CompressionLevel.Fastest).Open()) uninstallOutput.Write(bytes);
+        files[uninstallName] = hash;
+    }
+    desktopEntry.Delete();
+    using (var input = File.OpenRead(Path.GetFullPath(rustDesktop)))
+    {
+        files[desktopName] = Convert.ToHexString(SHA256.HashData(input)).ToLowerInvariant();
+        input.Position = 0;
+        using var desktopOutput = package.CreateEntry(desktopName, CompressionLevel.Fastest).Open();
+        input.CopyTo(desktopOutput);
+    }
+    manifestEntry.Delete();
+    using (var manifestOutput = package.CreateEntry("manifest.json", CompressionLevel.Fastest).Open()) JsonSerializer.Serialize(manifestOutput, files);
+    Console.WriteLine($"Updated verified desktop entries; retained {files.Count} manifest files.");
+    return;
+}
+
 if (args is ["--verify", var archive])
 {
     using var package = ZipFile.OpenRead(Path.GetFullPath(archive));

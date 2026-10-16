@@ -62,3 +62,17 @@ The earlier installer was open during packaging, so this build is available at `
 - Log build size: 720,360,368 bytes.
 - SHA256: `e526726dc705115ed8a6b108ccc6f5a8fea769d3515ab96dd509bf0fbc59d7bd`.
 - UI evidence: `work/rust-install-log-ui.json`.
+
+## Rust desktop launcher (2026-10-16)
+
+The bundled desktop launcher now uses Rust / GPUI Kit, with the original logo, a service dashboard, activity log and native notification-area icon. Window and tray Restart/Exit actions share confirmation dialogs; closing the window also requires exit confirmation. The ASP.NET manager and separate C# uninstaller remain bundled.
+
+- Installer: `artifacts/installer/rust-desktop/SupabaseLocal.Setup.exe`, 729,993,235 bytes.
+- SHA256: `dbb183217a25fea8c79c9e9e783611452fc9e4c85c0e5912c348296889451d13`.
+- All eleven Rust tests pass, including confirmation cancellation and duplicate-action gating.
+- The complete packaged release passed extraction, repeat verification, tamper rejection, data preservation and two SQL/Auth/REST/Storage integration cycles.
+- The extracted Rust launcher started all six services and shut down gracefully. A separate real restart test used distinct manager process IDs, preserved secrets and all four stored project files, and left no service listeners running.
+- Native UI verification rendered the packaged dashboard, tray icon and both confirmation dialogs. Interactive mouse clicks were not exercised; confirmation dispatch is covered by unit tests and lifecycle behavior by the real process tests.
+- Evidence: `work/rust-desktop-release-validation-20261016` and `work/rust-desktop-packaged-ui.json`.
+
+Tests used isolated data. This build has not replaced the current user's installed launcher; install the new bundle after closing the older launcher.

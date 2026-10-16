@@ -4,7 +4,7 @@
 
 An experimental native Windows port of upstream Supabase services, with a Rust / GPUI Kit installer and ASP.NET Core manager. No Docker or WSL2.
 
-The Rust setup lives in `src/SupabaseLocal.Setup.Rust`. It uses [GPUI Kit](https://gpui-kit.com/) for its desktop UI and retains the existing C# desktop launcher, uninstaller and service manager. See [Rust installer development](docs/rust-installer.md) for build and verification steps. The original C# setup is retained as a migration reference.
+The Rust setup lives in `src/SupabaseLocal.Setup.Rust`. Both the installer and desktop launcher use [GPUI Kit](https://gpui-kit.com/). The launcher provides service status, an activity log, a notification-area icon and confirmed Restart/Exit actions. The ASP.NET Core service manager and separate C# uninstaller remain bundled. See [Rust installer development](docs/rust-installer.md) for build and verification steps. The original C# setup is retained as a migration reference.
 
 ## Runtime decision
 
@@ -14,9 +14,9 @@ The current milestone runs the real Supabase Studio, upstream postgres-meta, Sup
 
 ## Use the installer
 
-Open `SupabaseLocal.Setup.exe` and select **Install Supabase Local**. The Rust installer checks Windows prerequisites and installs a verified bundled runtime under `%LOCALAPPDATA%/SupabaseLocal/versions`. Select **Open Supabase Local** after installation; the desktop launcher initializes the database, starts the native processes and opens real Supabase Studio at `http://127.0.0.1:54323`.
+Open `SupabaseLocal.Setup.exe` and select **Install Supabase Local**. The Rust installer checks Windows prerequisites and installs a verified bundled runtime under `%LOCALAPPDATA%/SupabaseLocal/versions`. Select **Open Supabase Local** after installation; the desktop launcher initializes the database, starts the native processes and shows their status. Select **Open Studio** to open real Supabase Studio at `http://127.0.0.1:54323`.
 
-Keep the installed desktop launcher open while working. Closing it stops its services gracefully. Open **Supabase Local** from Start to restart the same project. The database, generated secrets, SQL snippets and logs are retained under `%LOCALAPPDATA%/SupabaseLocal/data`. No global PATH modification is needed. The .NET and Node runtimes are bundled; users do not need SDKs, Git or npm.
+The desktop launcher stays available in the Windows notification area. **Hide to tray** keeps services running; double-click the icon or choose **Show Supabase Local** to restore the window. **Restart services** asks **Confirm restart** before interrupting connections. **Exit**, including closing the window, asks **Confirm exit** and then stops services gracefully. Cancel leaves services running. Open **Supabase Local** from Start to restart the same project. The database, generated secrets, SQL snippets and logs are retained under `%LOCALAPPDATA%/SupabaseLocal/data`. No global PATH modification is needed. The .NET and Node runtimes are bundled; users do not need SDKs, Git or npm.
 
 Target: Windows 10/11 x64 and NTFS. If the required Microsoft Visual C++ runtime is absent, the launcher downloads a checksum-pinned package from Microsoft and requests the normal Windows administrator prompt. That first prerequisite installation needs internet access and can require a restart. Redistribution of that Microsoft package is not included in this repository or payload.
 
@@ -26,7 +26,7 @@ The bundled runtime is large, so allow time for the first installation and integ
 
 To uninstall, close Supabase Local and use **Settings → Apps → Installed apps → Supabase Local → Uninstall**, or its Start menu uninstall entry. Uninstall removes application versions and shortcuts while keeping project data by default. Selecting **Also permanently delete my local project data** requires an additional confirmation. Reinstalling can reuse retained data.
 
-The installer executable is a generated artifact under `artifacts/installer`, not committed into Git.
+The installer executable is a generated artifact under `artifacts/installer`, not committed into Git. See [Rust desktop launcher](docs/rust-desktop.md) for dashboard, notification-area controls and verification details.
 
 ## Verified scope
 

@@ -22,6 +22,7 @@ function Wait-Ready {
 function Close-Launcher {
     param([int]$ProcessId)
     $process = Get-Process -Id $ProcessId
+    Write-Output 'Confirm exit in the launcher window to complete this interactive shutdown check.'
     if (!$process.CloseMainWindow()) { throw 'Could not request graceful launcher shutdown' }
     if (!$process.WaitForExit(60000)) { throw 'Launcher did not stop gracefully' }
     foreach ($port in @(54320,54321,54322,54323,54324,54325,54326,54328,54330)) {
