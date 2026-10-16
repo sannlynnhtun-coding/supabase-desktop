@@ -35,9 +35,11 @@ jobs:
           parts = sorted(pathlib.Path('parts').glob('SupabaseLocal.Setup.exe.part-*'))
           if not parts:
               raise SystemExit('No parts found')
-          for index, part in enumerate(parts):
-              if part.name != f'SupabaseLocal.Setup.exe.part-{index:03d}':
-                  raise SystemExit('Missing or unexpected part')
+          for part in parts:
+              if not re.fullmatch(r'SupabaseLocal\.Setup\.exe\.part-\d{3}(?:-\d{3})?', part.name):
+                  raise SystemExit('Unexpected part name')
+          # A failed large part may be replaced by ordered smaller subparts.
+          # The complete-file checksum detects missing or duplicate content.
           output = pathlib.Path('SupabaseLocal.Setup.exe')
           with output.open('wb') as destination:
               for part in parts:
