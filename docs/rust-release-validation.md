@@ -32,3 +32,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-rust-release.ps
 ```
 
 Build output, isolated databases, generated secrets and detailed evidence stay in ignored directories. The executable is not committed to Git.
+
+## Branding follow-up (2026-10-16)
+
+The current installer restores the original project's PNG logo, Segoe UI header, "Supabase Local" title, "Unofficial native Windows port" subtitle, and unchanged six-frame Windows icon. The logo is decoded before rendering so it is present in the initial frame. All six native executable icon frames were compared byte for byte with the original ICO, and the packaged GPUI window render check passed.
+
+- Current installer size: 720,333,744 bytes.
+- Current SHA256: `4202a6e32945115bfb01c37151e940ab3341429411e53d3168b42e763792f002`.
+- Runtime payload hash remains the previously tested version `a1fc3aa17625cfa3`; services were not rebuilt for this branding change.
+- UI evidence: `work/rust-branding-packaged-ui.json` and its adjacent error log.

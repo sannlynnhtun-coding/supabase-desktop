@@ -6,3 +6,5 @@ Unmodified official assets from the pinned Supabase source revision `79964102d36
 - `supabase.ico`: Windows icon container with six unchanged PNG frames from `apps/studio/public/favicon/`, at 16, 32, 48, 96, 128 and 196 pixels. `scripts/package-brand-icon.mjs` preserves their original bytes without resizing or recoloring.
 
 The logo identifies the upstream Supabase software bundled by this unofficial native Windows port. Supabase trademarks remain owned by Supabase Inc. Branding guidance: https://supabase.com/brand-assets
+
+Both installers reference these same files. The C# installer uses `AppBranding.cs`; the Rust GPUI installer embeds `supabase-logo.png` for its header and uses `branding.rc` to embed the unchanged `supabase.ico` as Windows icon resource 1. The Rust header follows the original title, Segoe UI typeface and "Unofficial native Windows port" subtitle.

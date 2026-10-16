@@ -13,6 +13,7 @@ use gpui_kit::{
 use std::{path::PathBuf, sync::mpsc, time::Duration};
 
 struct Setup {
+    logo: std::sync::Arc<RenderImage>,
     message: String,
     busy: bool,
     installed: Option<PathBuf>,
@@ -81,12 +82,35 @@ impl Render for Setup {
             .flex()
             .flex_col()
             .size_full()
-            .p_8()
+            .p_6()
+            .font_family("Segoe UI")
             .gap_6()
             .bg(cx.theme().background)
             .text_color(cx.theme().foreground)
-            .child(div().text_3xl().child("Supabase Local"))
-            .child(div().text_lg().child("Native Windows installer"))
+            .child(
+                div()
+                    .flex()
+                    .items_center()
+                    .gap_4()
+                    .child(img(self.logo.clone()).w(px(48.)).h(px(50.)).flex_shrink_0())
+                    .child(
+                        div()
+                            .flex()
+                            .flex_col()
+                            .gap_2()
+                            .child(
+                                div()
+                                    .text_size(px(22.))
+                                    .font_weight(FontWeight::BOLD)
+                                    .child("Supabase Local"),
+                            )
+                            .child(
+                                div()
+                                    .text_color(cx.theme().muted_foreground)
+                                    .child("Unofficial native Windows port"),
+                            ),
+                    ),
+            )
             .child("PostgreSQL · Studio · Auth · REST · Storage")
             .child("Installs for your Windows account. Existing project data is preserved.")
             .child(div().flex_1().child(self.message.clone()))
@@ -171,7 +195,13 @@ fn main() -> anyhow::Result<()> {
                     eprintln!("GPUI verification: native window created");
                 }
                 window.set_window_title("Supabase Local — Setup");
-                let view = cx.new(|_| Setup {
+                let view = cx.new(|cx| Setup {
+                    logo: Image::from_bytes(
+                        ImageFormat::Png,
+                        include_bytes!("../../Shared/Branding/supabase-logo.png").to_vec(),
+                    )
+                    .to_image_data(cx.svg_renderer())
+                    .expect("Could not decode the original Supabase logo"),
                     message: "Ready to install the bundled native runtime.".into(),
                     busy: false,
                     installed: None,

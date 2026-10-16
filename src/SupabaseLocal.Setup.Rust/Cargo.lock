@@ -6047,6 +6047,7 @@ name = "supabase-local-setup"
 version = "0.3.0"
 dependencies = [
  "anyhow",
+ "embed-resource",
  "fs2",
  "gpui-kit",
  "junction",
