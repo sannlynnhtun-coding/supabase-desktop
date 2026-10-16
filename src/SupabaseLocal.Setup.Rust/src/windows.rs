@@ -73,8 +73,8 @@ try {
     if ($values.InstallerOwner -ne 'SupabaseLocal.NativeWindows.v1' -or $values.InstallLocation -ne $Root) { throw 'Wrong registration ownership' }
     if ($values.UninstallString -ne ('"' + $Exe + '" --uninstall')) { throw 'Wrong uninstall command' }
     $shell = New-Object -ComObject WScript.Shell
-    $app = $shell.CreateShortcut((Join-Path $Programs 'Supabase Local.lnk'))
-    $uninstall = $shell.CreateShortcut((Join-Path $Programs 'Uninstall Supabase Local.lnk'))
+    $app = $shell.CreateShortcut((Join-Path $Programs 'Supabase Desktop.lnk'))
+    $uninstall = $shell.CreateShortcut((Join-Path $Programs 'Uninstall Supabase Desktop.lnk'))
     if ($app.TargetPath -ne $Exe -or $app.Arguments -ne '' -or $uninstall.TargetPath -ne $Exe -or $uninstall.Arguments -ne '--uninstall') { throw ('Wrong shortcut target or arguments: app=[' + $app.TargetPath + '][' + $app.Arguments + ']; uninstall=[' + $uninstall.TargetPath + '][' + $uninstall.Arguments + ']; expected=[' + $Exe + ']') }
 } finally {
     Remove-Item -LiteralPath $RegistryPath -ErrorAction SilentlyContinue

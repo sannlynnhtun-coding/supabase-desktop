@@ -2,6 +2,8 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType><TargetFramework>net10.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><Version>0.2.0</Version>
+    <Product>Supabase Desktop</Product>
+    <Title>Supabase Desktop</Title>
     <ApplicationIcon>../Shared/Branding/supabase.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>

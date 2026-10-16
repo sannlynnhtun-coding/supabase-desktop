@@ -36,15 +36,16 @@ fn install_for_user(report: &impl Fn(String)) -> anyhow::Result<PathBuf> {
     )
     .join("SupabaseLocal");
     std::fs::create_dir_all(&root)?;
-    report("Checking for another running Supabase Local app…".into());
+    report("Checking for another running Supabase Desktop app…".into());
     let lock = std::fs::OpenOptions::new()
         .create(true)
         .truncate(false)
         .read(true)
         .write(true)
         .open(root.join("launcher.lock"))?;
-    fs2::FileExt::try_lock_exclusive(&lock)
-        .map_err(|_| anyhow::anyhow!("Close the running Supabase Local app before installing."))?;
+    fs2::FileExt::try_lock_exclusive(&lock).map_err(|_| {
+        anyhow::anyhow!("Close the running Supabase Desktop app before installing.")
+    })?;
     report("Reading and verifying the bundled runtime archive…".into());
     let bytes = bundle::read()?;
     report("Runtime archive checksum verified. Preparing application files…".into());
@@ -93,7 +94,7 @@ impl Setup {
                                 this.busy = false;
                                 finished = true;
                                 match result {
-                                    Ok(path) => { this.installed = Some(path); this.message = "Installation complete. Open Supabase Local to start your services.".into(); }
+                                    Ok(path) => { this.installed = Some(path); this.message = "Installation complete. Open Supabase Desktop to start your services.".into(); }
                                     Err(error) => {
                                         this.message = "Setup could not finish. See the installation log below.".into();
                                         this.append_log(format!("ERROR: {error}"));
@@ -136,7 +137,7 @@ impl Render for Setup {
                                 div()
                                     .text_size(px(22.))
                                     .font_weight(FontWeight::BOLD)
-                                    .child("Supabase Local"),
+                                    .child("Supabase Desktop"),
                             )
                             .child(
                                 div()
@@ -186,11 +187,11 @@ impl Render for Setup {
                 Button::new("install")
                     .primary()
                     .label(if self.installed.is_some() {
-                        "Open Supabase Local"
+                        "Open Supabase Desktop"
                     } else if self.busy {
                         "Installing…"
                     } else {
-                        "Install Supabase Local"
+                        "Install Supabase Desktop"
                     })
                     .disabled(self.busy)
                     .on_click(cx.listener(|this, _, _, cx| {
@@ -225,7 +226,7 @@ fn main() -> anyhow::Result<()> {
     if !args.is_empty() && !verify_ui {
         anyhow::ensure!(
             args.len() == 2 && args[0] == "--verify-install",
-            "Usage: SupabaseLocal.Setup.exe [--install | --verify-install <directory> | --verify-ui <result.json>]"
+            "Usage: SupabaseDesktop.Setup.exe [--install | --verify-install <directory> | --verify-ui <result.json>]"
         );
         let root = PathBuf::from(&args[1]);
         let bytes = bundle::read()?;
@@ -268,7 +269,7 @@ fn main() -> anyhow::Result<()> {
                 if verify_ui {
                     eprintln!("GPUI verification: native window created");
                 }
-                window.set_window_title("Supabase Local — Setup");
+                window.set_window_title("Supabase Desktop — Setup");
                 let view = cx.new(|cx| Setup {
                     logo: Image::from_bytes(
                         ImageFormat::Png,
@@ -279,7 +280,7 @@ fn main() -> anyhow::Result<()> {
                     message: "Ready to install the bundled native runtime.".into(),
                     busy: false,
                     installed: None,
-                    logs: vec!["Ready. Select Install Supabase Local to begin.".into()],
+                    logs: vec!["Ready. Select Install Supabase Desktop to begin.".into()],
                     log_started: Instant::now(),
                     log_scroll: ScrollHandle::new(),
                 });

@@ -2,7 +2,7 @@
 
 Validated on Windows x64 on 2026-10-16 using the complete `artifacts/runtime-storage-v1` runtime.
 
-- Installer: `artifacts/installer/SupabaseLocal.Setup.exe`
+- Installer: `artifacts/installer/SupabaseDesktop.Setup.exe`
 - Size: 720,240,560 bytes
 - SHA256: `ce433ded93f8771ff22e07ec7e2ea3ee5cca34ae2619f8ba9d15f29cb7820c64`
 - Payload: 112,980 files plus the checksum manifest; approximately 1.75 GiB unpacked.
@@ -35,7 +35,7 @@ Build output, isolated databases, generated secrets and detailed evidence stay i
 
 ## Branding follow-up (2026-10-16)
 
-The current installer restores the original project's PNG logo, Segoe UI header, "Supabase Local" title, "Unofficial native Windows port" subtitle, and unchanged six-frame Windows icon. The logo is decoded before rendering so it is present in the initial frame. All six native executable icon frames were compared byte for byte with the original ICO, and the packaged GPUI window render check passed.
+The current installer restores the original project's PNG logo, Segoe UI header, "Supabase Desktop" title, "Unofficial native Windows port" subtitle, and unchanged six-frame Windows icon. The logo is decoded before rendering so it is present in the initial frame. All six native executable icon frames were compared byte for byte with the original ICO, and the packaged GPUI window render check passed.
 
 - Branding build size: 720,333,744 bytes.
 - Branding build SHA256: `4202a6e32945115bfb01c37151e940ab3341429411e53d3168b42e763792f002`.
@@ -57,7 +57,7 @@ All nine Rust tests pass, including temporary script execution, arguments with s
 
 The setup window now retains timestamped progress in an automatically scrolling log panel. It reports prerequisites, archive checks, file counts, runtime links, Windows registration, completion and detailed errors. All nine Rust tests and the packaged native-window render check pass.
 
-The earlier installer was open during packaging, so this build is available at `artifacts/installer/with-logs/SupabaseLocal.Setup.exe`. Close the earlier setup window and use this executable for the live log.
+The earlier installer was open during packaging, so this build is available at `artifacts/installer/with-logs/SupabaseDesktop.Setup.exe`. Close the earlier setup window and use this executable for the live log.
 
 - Log build size: 720,360,368 bytes.
 - SHA256: `e526726dc705115ed8a6b108ccc6f5a8fea769d3515ab96dd509bf0fbc59d7bd`.
@@ -67,7 +67,7 @@ The earlier installer was open during packaging, so this build is available at `
 
 The bundled desktop launcher now uses Rust / GPUI Kit, with the original logo, a service dashboard, activity log and native notification-area icon. Window and tray Restart/Exit actions share confirmation dialogs; closing the window also requires exit confirmation. The ASP.NET manager and separate C# uninstaller remain bundled.
 
-- Installer: `artifacts/installer/rust-desktop/SupabaseLocal.Setup.exe`, 729,993,235 bytes.
+- Installer: `artifacts/installer/rust-desktop/SupabaseDesktop.Setup.exe`, 729,993,235 bytes.
 - SHA256: `dbb183217a25fea8c79c9e9e783611452fc9e4c85c0e5912c348296889451d13`.
 - All eleven Rust tests pass, including confirmation cancellation and duplicate-action gating.
 - The complete packaged release passed extraction, repeat verification, tamper rejection, data preservation and two SQL/Auth/REST/Storage integration cycles.

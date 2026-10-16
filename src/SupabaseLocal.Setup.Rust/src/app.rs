@@ -31,7 +31,7 @@ struct Tray {
 impl Tray {
     fn new() -> Result<Self> {
         let menu = Menu::new();
-        let show = MenuItem::new("Show Supabase Local", true, None);
+        let show = MenuItem::new("Show Supabase Desktop", true, None);
         let studio = MenuItem::new("Open Supabase Studio", true, None);
         let restart = MenuItem::new("Restart services…", true, None);
         let exit = MenuItem::new("Exit…", true, None);
@@ -45,7 +45,7 @@ impl Tray {
         let icon = TrayIconBuilder::new()
             .with_menu(Box::new(menu))
             .with_icon(tray_icon::Icon::from_resource(1, Some((32, 32)))?)
-            .with_tooltip("Supabase Local — starting services")
+            .with_tooltip("Supabase Desktop — starting services")
             .with_menu_on_left_click(false)
             .build()?;
         Ok(Self {
@@ -159,7 +159,7 @@ impl Desktop {
                                 }
                                 if let Some(tray) = &this.tray {
                                     let _ = tray.icon.set_tooltip(Some(format!(
-                                        "Supabase Local — {}/6 services ready",
+                                        "Supabase Desktop — {}/6 services ready",
                                         this.status.available.len()
                                     )));
                                 }
@@ -406,7 +406,7 @@ impl Render for Desktop {
                                         div()
                                             .text_2xl()
                                             .font_weight(FontWeight::BOLD)
-                                            .child("Supabase Local"),
+                                            .child("Supabase Desktop"),
                                     )
                                     .child(
                                         div()
@@ -595,12 +595,12 @@ fn main() -> Result<()> {
         init(cx);
         cx.on_window_closed(|cx,_|{if cx.windows().is_empty(){cx.quit();}}).detach();
         let (handle, view)=open_window(WindowOptions { focus:false,show:!preview,window_bounds:Some(WindowBounds::Windowed(Bounds::centered(None,size(px(1000.),px(720.)),cx))),..Default::default() },cx,move|window,cx|{
-            window.set_window_title("Supabase Local");
+            window.set_window_title("Supabase Desktop");
             let view=cx.new(|cx|Desktop::new(window,cx,preview));
             let weak=view.downgrade();
             window.on_window_should_close(cx,move|window,cx|{let _=weak.update(cx,|this,cx|this.request(Action::Exit,window,cx));false});
             view
-        }).expect("Could not open Supabase Local");
+        }).expect("Could not open Supabase Desktop");
         if let Some(path)=result_path {
             handle.update(cx,|_,window,cx|{
                 let _=window.draw(cx);
@@ -612,7 +612,7 @@ fn main() -> Result<()> {
                 let _=window.draw(cx);
                 std::fs::write(path,b"{\"nativeWindow\":true,\"frameRendered\":true,\"restartConfirmationRendered\":true,\"exitConfirmationRendered\":true,\"trayIcon\":true}").expect("Could not save UI verification");
                 window.remove_window();cx.quit();
-            }).expect("Could not render Supabase Local");
+            }).expect("Could not render Supabase Desktop");
         }
     });
     Ok(())

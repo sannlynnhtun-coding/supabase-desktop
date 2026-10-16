@@ -17,7 +17,7 @@ The packaging script assembles the existing service payload, compiles the optimi
 
 Setup runs extraction and Windows integration on a worker thread and updates its UI through a channel. It hashes each file while extracting into its private staging directory, checks each existing file on repeat installations, and atomically moves the staging directory into the version directory, restores NTFS junctions and hard links, and registers current-user shortcuts and uninstall metadata. It preserves the existing installation ownership identifier so the bundled uninstaller can remove the installation. PowerShell handles Windows prerequisite and COM shortcut integration; the setup UI and payload installer are Rust.
 
-Use `SupabaseLocal.Setup.exe --verify-install <empty-test-directory>` to exercise an embedded payload without registering an installation or starting services. Verify repeat installation and tamper rejection before release. This command writes `verification-result.json` on success. Close the setup window only after installation completes; interruption can leave a version that will be verified on the next attempt.
+Use `SupabaseDesktop.Setup.exe --verify-install <empty-test-directory>` to exercise an embedded payload without registering an installation or starting services. Verify repeat installation and tamper rejection before release. This command writes `verification-result.json` on success. Close the setup window only after installation completes; interruption can leave a version that will be verified on the next attempt.
 
 The installed Rust desktop launcher owns service startup, confirmed restart and shutdown, and the notification-area icon. It forwards uninstallation to the separate bundled C# uninstaller. See [Rust desktop launcher](rust-desktop.md) for its dashboard, controls and verification modes. The ASP.NET manager remains unchanged.
 
@@ -29,7 +29,7 @@ To repackage an already verified payload after a Rust-only change, run `scripts/
 
 Framework documentation: https://gpui-kit.com/docs/getting-started/
 
-`SupabaseLocal.Setup.exe --install` performs the real current-user installation using the same function as the GUI Install button, including prerequisite checks and Windows registration. Unlike `--verify-install`, it creates Start menu and Installed apps entries. `scripts/test-rust-current-user-install.ps1` exercises this path, verifies the registered shortcuts and uninstall command, checks existing project file hashes, and tests the installed launcher with isolated service data. Run it only after closing the local stack.
+`SupabaseDesktop.Setup.exe --install` performs the real current-user installation using the same function as the GUI Install button, including prerequisite checks and Windows registration. Unlike `--verify-install`, it creates Start menu and Installed apps entries. `scripts/test-rust-current-user-install.ps1` exercises this path, verifies the registered shortcuts and uninstall command, checks existing project file hashes, and tests the installed launcher with isolated service data. Run it only after closing the local stack.
 
 The PowerShell helper closes its temporary script file before launching PowerShell while retaining the temporary path until the process exits. PowerShell errors are captured and displayed with the failing stage. Regression tests exercise locked-script prevention, arguments containing spaces, actionable error details, and real shortcut/registry registration in an isolated scope.
 

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -7,6 +7,8 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <Version>0.2.0</Version>
+    <Product>Supabase Desktop</Product>
+    <Title>Supabase Desktop</Title>
     <ApplicationIcon>../Shared/Branding/supabase.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup><Compile Include="../Shared/RuntimeLinks.cs" Link="RuntimeLinks.cs" /></ItemGroup>

@@ -1,4 +1,4 @@
-# Supabase Local for Windows
+# Supabase Desktop
 
 <img src="src/Shared/Branding/supabase-logo.svg" alt="Supabase logo" width="48" height="50">
 
@@ -12,19 +12,21 @@ The official Supabase local stack cannot currently run natively on Windows witho
 
 The current milestone runs the real Supabase Studio, upstream postgres-meta, Supabase Auth, PostgREST and Supabase Storage against private Windows PostgreSQL. These are upstream services, not C# replacements. This is an unofficial port; it does not make `supabase start` support a native Windows runtime.
 
+The app is named **Supabase Desktop**. Internal project names, the `%LOCALAPPDATA%/SupabaseLocal` data directory and the uninstall registration ID are retained for compatibility with existing installations.
+
 ## Use the installer
 
-Open `SupabaseLocal.Setup.exe` and select **Install Supabase Local**. The Rust installer checks Windows prerequisites and installs a verified bundled runtime under `%LOCALAPPDATA%/SupabaseLocal/versions`. Select **Open Supabase Local** after installation; the desktop launcher initializes the database, starts the native processes and shows their status. Select **Open Studio** to open real Supabase Studio at `http://127.0.0.1:54323`.
+Open `SupabaseDesktop.Setup.exe` and select **Install Supabase Desktop**. The Rust installer checks Windows prerequisites and installs a verified bundled runtime under `%LOCALAPPDATA%/SupabaseLocal/versions`. Select **Open Supabase Desktop** after installation; the desktop launcher initializes the database, starts the native processes and shows their status. Select **Open Studio** to open real Supabase Studio at `http://127.0.0.1:54323`.
 
-The desktop launcher stays available in the Windows notification area. **Hide to tray** keeps services running; double-click the icon or choose **Show Supabase Local** to restore the window. **Restart services** asks **Confirm restart** before interrupting connections. **Exit**, including closing the window, asks **Confirm exit** and then stops services gracefully. Cancel leaves services running. Open **Supabase Local** from Start to restart the same project. The database, generated secrets, SQL snippets and logs are retained under `%LOCALAPPDATA%/SupabaseLocal/data`. No global PATH modification is needed. The .NET and Node runtimes are bundled; users do not need SDKs, Git or npm.
+The desktop launcher stays available in the Windows notification area. **Hide to tray** keeps services running; double-click the icon or choose **Show Supabase Desktop** to restore the window. **Restart services** asks **Confirm restart** before interrupting connections. **Exit**, including closing the window, asks **Confirm exit** and then stops services gracefully. Cancel leaves services running. Open **Supabase Desktop** from Start to restart the same project. The database, generated secrets, SQL snippets and logs are retained under `%LOCALAPPDATA%/SupabaseLocal/data`. No global PATH modification is needed. The .NET and Node runtimes are bundled; users do not need SDKs, Git or npm.
 
 Target: Windows 10/11 x64 and NTFS. If the required Microsoft Visual C++ runtime is absent, the launcher downloads a checksum-pinned package from Microsoft and requests the normal Windows administrator prompt. That first prerequisite installation needs internet access and can require a restart. Redistribution of that Microsoft package is not included in this repository or payload.
 
-Setup creates **Supabase Local** and **Uninstall Supabase Local** entries in your Windows Start menu. After installation, search Start for **Supabase Local** to open the installed desktop app; you do not need to keep the downloaded setup EXE. Installation is for the current Windows user.
+Setup creates **Supabase Desktop** and **Uninstall Supabase Desktop** entries in your Windows Start menu. After installation, search Start for **Supabase Desktop** to open the installed desktop app; you do not need to keep the downloaded setup EXE. Installation is for the current Windows user.
 
 The bundled runtime is large, so allow time for the first installation and integrity checks. Later starts from the Start menu reuse the installed files.
 
-To uninstall, close Supabase Local and use **Settings → Apps → Installed apps → Supabase Local → Uninstall**, or its Start menu uninstall entry. Uninstall removes application versions and shortcuts while keeping project data by default. Selecting **Also permanently delete my local project data** requires an additional confirmation. Reinstalling can reuse retained data.
+To uninstall, close Supabase Desktop and use **Settings → Apps → Installed apps → Supabase Desktop → Uninstall**, or its Start menu uninstall entry. Uninstall removes application versions and shortcuts while keeping project data by default. Selecting **Also permanently delete my local project data** requires an additional confirmation. Reinstalling can reuse retained data.
 
 The installer executable is a generated artifact under `artifacts/installer`, not committed into Git. See [Rust desktop launcher](docs/rust-desktop.md) for dashboard, notification-area controls and verification details.
 
@@ -83,4 +85,4 @@ See `docs/native-windows.md` for remaining service-port work.
 
 Use Conventional Commits for each completed task, such as `chore: scaffold ASP.NET Core 10 application` and `feat: add local stack management`.
 
-Git remote: https://github.com/sannlynnhtun-coding/supabase-local-installer-with-rust
+Git remote: https://github.com/sannlynnhtun-coding/supabase-desktop

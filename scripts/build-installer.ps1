@@ -26,7 +26,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Payload manifest generation failed' }
 if ($LASTEXITCODE -ne 0) { throw 'Verified payload archive failed' }
 & "$PSScriptRoot/package-rust-installer.ps1" -Payload $zip -Output $output
 if ($LASTEXITCODE -ne 0) { throw 'Rust installer packaging failed' }
-$installer = Join-Path $output 'SupabaseLocal.Setup.exe'
+$installer = Join-Path $output 'SupabaseDesktop.Setup.exe'
 $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
-[IO.File]::WriteAllText("$installer.sha256", "$hash  SupabaseLocal.Setup.exe`n")
+[IO.File]::WriteAllText("$installer.sha256", "$hash  SupabaseDesktop.Setup.exe`n")
 Write-Output "Installer: $installer"

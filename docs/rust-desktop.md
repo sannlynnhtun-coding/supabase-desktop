@@ -5,9 +5,9 @@ The installed `SupabaseLocal.App.exe` is a Rust / GPUI Kit application. Its dash
 ## Window and notification area
 
 - **Open Studio** opens the local Studio once ready.
-- **Hide to tray** hides the window while services keep running. Double-click the notification icon or choose **Show Supabase Local** to restore it.
+- **Hide to tray** hides the window while services keep running. Double-click the notification icon or choose **Show Supabase Desktop** to restore it.
 - **Restart services** opens **Confirm restart**, with **Restart services** and **Cancel** buttons. Confirmation gracefully stops the owned manager and starts a new one using the same data directory.
-- **Exit**, including the window close button, opens **Confirm exit**, with **Exit Supabase Local** and **Cancel** buttons. The app quits only after its owned manager has stopped.
+- **Exit**, including the window close button, opens **Confirm exit**, with **Exit Supabase Desktop** and **Cancel** buttons. The app quits only after its owned manager has stopped.
 - The notification-icon menu offers Show, Open Studio, Restart and Exit. Its Restart/Exit entries use the same confirmation flow as the dashboard. Cancel never sends a service-control command.
 
 Confirmed actions are gated while in progress, preventing duplicate restarts or overlapping shutdowns. A shutdown failure keeps the launcher available and reports the error instead of forcibly killing services. A second launcher cannot acquire the installation lock or take over another manager.

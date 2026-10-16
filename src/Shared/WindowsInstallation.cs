@@ -9,7 +9,7 @@ internal sealed record InstallationScope(string Root, string Programs, string Re
 {
     public static InstallationScope Current => new(
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SupabaseLocal"),
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "Supabase Local"),
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "Supabase Desktop"),
         @"Software\Microsoft\Windows\CurrentVersion\Uninstall\SupabaseLocal");
 }
 
@@ -24,17 +24,17 @@ internal static class WindowsInstallation
         if (!executable.StartsWith(Path.Combine(root, "versions") + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) || !File.Exists(executable))
             throw new InvalidDataException("Installed app must be inside the verified version directory.");
         Directory.CreateDirectory(scope.Programs);
-        CreateShortcut(Path.Combine(scope.Programs, "Supabase Local.lnk"), executable, "", "Start Supabase Local and open Studio");
-        CreateShortcut(Path.Combine(scope.Programs, "Uninstall Supabase Local.lnk"), executable, "--uninstall", "Uninstall Supabase Local");
+        CreateShortcut(Path.Combine(scope.Programs, "Supabase Desktop.lnk"), executable, "", "Start Supabase Desktop and open Studio");
+        CreateShortcut(Path.Combine(scope.Programs, "Uninstall Supabase Desktop.lnk"), executable, "--uninstall", "Uninstall Supabase Desktop");
         using var key = Registry.CurrentUser.CreateSubKey(scope.RegistryPath);
         key.SetValue("InstallerOwner", Owner);
-        key.SetValue("DisplayName", "Supabase Local");
+        key.SetValue("DisplayName", "Supabase Desktop");
         key.SetValue("DisplayVersion", "0.2.0");
-        key.SetValue("Publisher", "Supabase Local community port");
+        key.SetValue("Publisher", "Supabase Desktop community port");
         key.SetValue("InstallLocation", root);
         key.SetValue("DisplayIcon", executable);
         key.SetValue("UninstallString", $"\"{executable}\" --uninstall");
-        key.SetValue("URLInfoAbout", "https://github.com/sannlynnhtun-coding/supabase-local");
+        key.SetValue("URLInfoAbout", "https://github.com/sannlynnhtun-coding/supabase-desktop");
         key.SetValue("NoModify", 1, RegistryValueKind.DWord);
         key.SetValue("NoRepair", 1, RegistryValueKind.DWord);
     }
@@ -62,7 +62,7 @@ internal static class WindowsInstallation
             }
             if (removeData) { progress.Report("Removing project data…"); DeleteTree(data, root); }
             progress.Report("Removing Start menu and Installed apps entries…");
-            foreach (var name in new[] { "Supabase Local.lnk", "Uninstall Supabase Local.lnk" })
+            foreach (var name in new[] { "Supabase Desktop.lnk", "Uninstall Supabase Desktop.lnk" })
                 File.Delete(Path.Combine(scope.Programs, name));
             if (Directory.Exists(scope.Programs) && !Directory.EnumerateFileSystemEntries(scope.Programs).Any()) Directory.Delete(scope.Programs);
             Registry.CurrentUser.DeleteSubKeyTree(scope.RegistryPath, throwOnMissingSubKey: false);

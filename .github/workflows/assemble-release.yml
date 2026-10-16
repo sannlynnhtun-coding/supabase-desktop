@@ -24,7 +24,7 @@ jobs:
       EXPECTED_SHA256: ${{ inputs.sha256 }}
     steps:
       - name: Download installer parts
-        run: gh release download "$RELEASE_TAG" --pattern 'SupabaseLocal.Setup.exe.part-*' --dir parts
+        run: gh release download "$RELEASE_TAG" --pattern 'SupabaseDesktop.Setup.exe.part-*' --dir parts
       - name: Assemble and verify exact installer
         shell: python
         run: |
@@ -32,15 +32,15 @@ jobs:
           expected = os.environ['EXPECTED_SHA256'].lower()
           if not re.fullmatch(r'[0-9a-f]{64}', expected):
               raise SystemExit('Invalid expected SHA256')
-          parts = sorted(pathlib.Path('parts').glob('SupabaseLocal.Setup.exe.part-*'))
+          parts = sorted(pathlib.Path('parts').glob('SupabaseDesktop.Setup.exe.part-*'))
           if not parts:
               raise SystemExit('No parts found')
           for part in parts:
-              if not re.fullmatch(r'SupabaseLocal\.Setup\.exe\.part-\d{3}(?:-\d{3})?', part.name):
+              if not re.fullmatch(r'SupabaseDesktop\.Setup\.exe\.part-\d{3}(?:-\d{3})?', part.name):
                   raise SystemExit('Unexpected part name')
           # A failed large part may be replaced by ordered smaller subparts.
           # The complete-file checksum detects missing or duplicate content.
-          output = pathlib.Path('SupabaseLocal.Setup.exe')
+          output = pathlib.Path('SupabaseDesktop.Setup.exe')
           with output.open('wb') as destination:
               for part in parts:
                   with part.open('rb') as source:
@@ -48,8 +48,8 @@ jobs:
           actual = hashlib.file_digest(output.open('rb'), 'sha256').hexdigest()
           if actual != expected:
               raise SystemExit(f'Installer checksum mismatch: {actual}')
-          pathlib.Path('SupabaseLocal.Setup.exe.sha256').write_text(
-              f'{actual}  SupabaseLocal.Setup.exe\n', encoding='ascii')
+          pathlib.Path('SupabaseDesktop.Setup.exe.sha256').write_text(
+              f'{actual}  SupabaseDesktop.Setup.exe\n', encoding='ascii')
           print(f'Verified {output.stat().st_size} bytes, SHA256 {actual}')
       - name: Upload verified installer and checksum
-        run: gh release upload "$RELEASE_TAG" SupabaseLocal.Setup.exe SupabaseLocal.Setup.exe.sha256 --clobber
+        run: gh release upload "$RELEASE_TAG" SupabaseDesktop.Setup.exe SupabaseDesktop.Setup.exe.sha256 --clobber

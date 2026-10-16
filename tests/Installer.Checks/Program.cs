@@ -49,7 +49,7 @@ try
         {
             WindowsInstallation.Register(version, scope);
             WindowsInstallation.Register(version, scope);
-            if (!File.Exists(Path.Combine(scope.Programs, "Supabase Local.lnk"))) throw new Exception("Start menu link missing");
+            if (!File.Exists(Path.Combine(scope.Programs, "Supabase Desktop.lnk"))) throw new Exception("Start menu link missing");
             using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(scope.RegistryPath))
                 if (key?.GetValue("UninstallString") as string != $"\"{Path.Combine(version, "SupabaseLocal.App.exe")}\" --uninstall") throw new Exception("Uninstall command is incorrect");
             using (var held = new FileStream(Path.Combine(appRoot, "launcher.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))

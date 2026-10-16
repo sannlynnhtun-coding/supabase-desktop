@@ -1,5 +1,5 @@
 param(
-    [string]$Installer = "$PSScriptRoot/../artifacts/installer/SupabaseLocal.Setup.exe",
+    [string]$Installer = "$PSScriptRoot/../artifacts/installer/SupabaseDesktop.Setup.exe",
     [string]$Evidence = "$PSScriptRoot/../work/rust-release-test-$([Guid]::NewGuid().ToString('N'))",
     [switch]$Resume
 )

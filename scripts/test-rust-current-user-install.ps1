@@ -1,5 +1,5 @@
 param(
-    [string]$Installer = "$PSScriptRoot/../artifacts/installer/SupabaseLocal.Setup.exe",
+    [string]$Installer = "$PSScriptRoot/../artifacts/installer/SupabaseDesktop.Setup.exe",
     [string]$Evidence = "$PSScriptRoot/../work/rust-current-user-install-$([Guid]::NewGuid().ToString('N'))"
 )
 $ErrorActionPreference = 'Stop'
@@ -26,10 +26,10 @@ foreach ($name in $before.Keys) {
 }
 $registration = Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\SupabaseLocal'
 if ($registration.InstallerOwner -ne 'SupabaseLocal.NativeWindows.v1' -or $registration.InstallLocation -ne $root) { throw 'Incorrect installation registration.' }
-$programs = Join-Path ([Environment]::GetFolderPath('Programs')) 'Supabase Local'
+$programs = Join-Path ([Environment]::GetFolderPath('Programs')) 'Supabase Desktop'
 $shell = New-Object -ComObject WScript.Shell
-$shortcut = $shell.CreateShortcut((Join-Path $programs 'Supabase Local.lnk'))
-$uninstall = $shell.CreateShortcut((Join-Path $programs 'Uninstall Supabase Local.lnk'))
+$shortcut = $shell.CreateShortcut((Join-Path $programs 'Supabase Desktop.lnk'))
+$uninstall = $shell.CreateShortcut((Join-Path $programs 'Uninstall Supabase Desktop.lnk'))
 $exe = $shortcut.TargetPath
 if (!$exe.StartsWith((Join-Path $root 'versions') + '\', [StringComparison]::OrdinalIgnoreCase) -or !(Test-Path -LiteralPath $exe)) { throw 'Invalid installed launcher.' }
 if ($shortcut.Arguments -ne '' -or $uninstall.TargetPath -ne $exe -or $uninstall.Arguments -ne '--uninstall' -or $registration.UninstallString -ne ('"' + $exe + '" --uninstall')) { throw 'Incorrect shortcuts or uninstall command.' }

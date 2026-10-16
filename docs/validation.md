@@ -26,7 +26,7 @@ Validated on the development Windows desktop on 2026-10-12, with desktop install
 ## Updated desktop installation checks — 2026-10-13
 
 - The branded EXE's `--verify-install` mode successfully extracted and checked all 112,980 files into the real current-user installation directory and restored runtime junctions. An initial normal GUI attempt rolled back, and a later repeat GUI attempt exited before startup without a new error log; a complete GUI installation flow remains unverified. Setup now persists caught failures to `%LOCALAPPDATA%\SupabaseLocal\setup-error.log`.
-- The installed desktop EXE started all six available native services. After graceful shutdown, launching the actual `Supabase Local.lnk` started the same six services. Both Start menu shortcut targets, EXE icons, and the actual Installed apps uninstall command passed checks.
+- The installed desktop EXE started all six available native services. After graceful shutdown, launching the actual `Supabase Desktop.lnk` started the same six services. Both Start menu shortcut targets, EXE icons, and the actual Installed apps uninstall command passed checks.
 - Real upstream Studio rendered in the browser. Its SQL editor executed `select version() as postgres_version, 1 + 1 as launch_test;` and returned PostgreSQL 17.6 on x86_64-windows and `2`.
 - The shipped uninstaller worker ran against the real installation with project deletion disabled. It removed the version directory, both shortcuts and the Installed apps registration; all 1,234 project files retained their exact pre-uninstall SHA-256 hashes. Deferred cleanup removed the temporary worker directory.
 - Program files were restored from a temporary validation cache outside the installation root (project data excluded). The shipped EXE then successfully reverified the entire restored payload and recreated runtime links. The runtime is present, but final shortcut registration and GUI relaunch were rejected by automatic approval review with only `blocked by policy`. At the end of this check the app is stopped and the Start menu/Installed apps entries remain removed. Run the updated setup EXE normally to finish registration and launch.
@@ -34,7 +34,7 @@ Validated on the development Windows desktop on 2026-10-12, with desktop install
 
 ## Artifact
 
-`SupabaseLocal.Setup.exe` SHA-256:
+`SupabaseDesktop.Setup.exe` SHA-256:
 
 ```text
 ac2afbf1ddf60b809424d6c19182f905863d9854a41dbd8831efb3615d148b3a

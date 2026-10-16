@@ -3,7 +3,7 @@ $ErrorActionPreference = 'Stop'
 $evidencePath = [IO.Path]::GetFullPath($Evidence)
 $root = [IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'SupabaseLocal'))
 $registry = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\SupabaseLocal'
-$programs = Join-Path ([Environment]::GetFolderPath('Programs')) 'Supabase Local'
+$programs = Join-Path ([Environment]::GetFolderPath('Programs')) 'Supabase Desktop'
 $shortcut = Get-Content (Join-Path $evidencePath 'shortcuts.json') -Raw | ConvertFrom-Json
 $desktopId = [int](Get-Content (Join-Path $evidencePath 'desktop.pid'))
 $desktop = Get-Process -Id $desktopId
@@ -35,7 +35,7 @@ for ($attempt=0; $attempt -lt 1200; $attempt++) {
 }
 if (Test-Path $registry) { throw 'Uninstaller did not remove Installed apps registration' }
 if (Test-Path (Join-Path $root 'versions')) { throw 'Installed application files remain' }
-foreach ($name in @('Supabase Local.lnk','Uninstall Supabase Local.lnk')) {
+foreach ($name in @('Supabase Desktop.lnk','Uninstall Supabase Desktop.lnk')) {
     if (Test-Path -LiteralPath (Join-Path $programs $name)) { throw "Shortcut remains: $name" }
 }
 $after = @(Get-ChildItem -LiteralPath $data -File -Recurse)

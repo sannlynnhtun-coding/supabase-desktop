@@ -21,7 +21,7 @@ internal sealed class SetupWindow : Form
         this.installed = installed;
         this.verificationData = verificationData;
         if (verificationData is not null) ShowInTaskbar = false;
-        Text = "Supabase Local — Native Windows";
+        Text = "Supabase Desktop — Native Windows";
         Icon = AppBranding.WindowIcon();
         ClientSize = new Size(580, 330);
         StartPosition = FormStartPosition.CenterScreen;

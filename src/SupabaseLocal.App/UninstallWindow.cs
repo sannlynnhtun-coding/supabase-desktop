@@ -3,14 +3,14 @@ using SupabaseLocal.Setup;
 
 internal sealed class UninstallWindow : Form
 {
-    private readonly Label status = new() { Dock = DockStyle.Fill, Padding = new Padding(20), Text = "Remove Supabase Local, its Start menu shortcuts and its Windows app entry. Close Supabase Local before uninstalling. Project data is kept unless you select the option below." };
+    private readonly Label status = new() { Dock = DockStyle.Fill, Padding = new Padding(20), Text = "Remove Supabase Desktop, its Start menu shortcuts and its Windows app entry. Close Supabase Desktop before uninstalling. Project data is kept unless you select the option below." };
     private readonly CheckBox purge = new() { Dock = DockStyle.Bottom, Height = 45, Text = "Also permanently delete my local project data", Padding = new Padding(20, 0, 0, 0) };
     private readonly Button action = new() { Dock = DockStyle.Bottom, Height = 45, Text = "Uninstall" };
     private bool busy;
 
     public UninstallWindow(int? parent = null, bool removeData = false)
     {
-        Text = "Uninstall Supabase Local";
+        Text = "Uninstall Supabase Desktop";
         Icon = AppBranding.WindowIcon();
         ClientSize = new Size(580, 350);
         StartPosition = FormStartPosition.CenterScreen;
@@ -43,7 +43,7 @@ internal sealed class UninstallWindow : Form
             using var worker = Process.Start(info) ?? throw new InvalidOperationException("Could not start the uninstaller.");
             Close();
         }
-        catch (IOException) { status.Text = "Close Supabase Local and its running services, then click Uninstall again."; }
+        catch (IOException) { status.Text = "Close Supabase Desktop and its running services, then click Uninstall again."; }
         catch (Exception ex) { status.Text = "Uninstall could not start: " + ex.Message; }
     }
 
@@ -66,9 +66,9 @@ internal sealed class UninstallWindow : Form
             status.Text = removeData ? "Removing application and project data…" : "Removing application. Your project data will be kept…";
             var progress = new Progress<string>(text => status.Text = text);
             await Task.Run(() => WindowsInstallation.Remove(InstallationScope.Current, removeData, progress));
-            status.Text = removeData ? "Supabase Local and its project data have been removed." : "Supabase Local has been removed. Your project data is kept in:\n" + Path.Combine(InstallationScope.Current.Root, "data");
+            status.Text = removeData ? "Supabase Desktop and its project data have been removed." : "Supabase Desktop has been removed. Your project data is kept in:\n" + Path.Combine(InstallationScope.Current.Root, "data");
         }
-        catch (IOException ex) { status.Text = "Close Supabase Local and its services, then try uninstalling again.\n" + ex.Message; Environment.ExitCode = 1; }
+        catch (IOException ex) { status.Text = "Close Supabase Desktop and its services, then try uninstalling again.\n" + ex.Message; Environment.ExitCode = 1; }
         catch (Exception ex) { status.Text = "Uninstall could not finish: " + ex.Message; Environment.ExitCode = 1; }
         finally
         {

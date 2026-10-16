@@ -12,7 +12,7 @@ if (!$cargo) { $cargo = Get-Command "$env:USERPROFILE/.cargo/bin/cargo.exe" }
 & $cargo.Source build --release --locked --manifest-path "$repo/src/SupabaseLocal.Setup.Rust/Cargo.toml"
 if ($LASTEXITCODE -ne 0) { throw 'Rust release build failed.' }
 New-Item -ItemType Directory -Force -Path $outputPath | Out-Null
-$installer = Join-Path $outputPath 'SupabaseLocal.Setup.exe'
+$installer = Join-Path $outputPath 'SupabaseDesktop.Setup.exe'
 $temporary = Join-Path $outputPath ('SupabaseLocal.Setup.build-' + [Guid]::NewGuid().ToString('N'))
 $outputStream = [IO.File]::Open($temporary, [IO.FileMode]::CreateNew)
 try {
@@ -33,5 +33,5 @@ try {
 } finally { $outputStream.Dispose() }
 Move-Item -LiteralPath $temporary -Destination $installer -Force
 $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
-[IO.File]::WriteAllText("$installer.sha256", "$hash  SupabaseLocal.Setup.exe`n")
+[IO.File]::WriteAllText("$installer.sha256", "$hash  SupabaseDesktop.Setup.exe`n")
 Write-Output "Bundled Rust installer: $installer"

@@ -2,7 +2,7 @@ param([Parameter(Mandatory=$true)][Alias('InstallerId')][int]$LauncherId, [Param
 $ErrorActionPreference = 'Stop'
 $root = Join-Path $env:LOCALAPPDATA 'SupabaseLocal'
 $registry = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\SupabaseLocal'
-$programs = Join-Path ([Environment]::GetFolderPath('Programs')) 'Supabase Local'
+$programs = Join-Path ([Environment]::GetFolderPath('Programs')) 'Supabase Desktop'
 $evidencePath = [IO.Path]::GetFullPath($Evidence)
 New-Item -ItemType Directory -Force $evidencePath | Out-Null
 function Wait-Ready {
@@ -34,8 +34,8 @@ $status | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $evidencePath 'instal
 $registration = Get-ItemProperty $registry
 if ($registration.InstallerOwner -ne 'SupabaseLocal.NativeWindows.v1' -or $registration.InstallLocation -ne $root) { throw 'Wrong uninstall registration' }
 $shell = New-Object -ComObject WScript.Shell
-$link = $shell.CreateShortcut((Join-Path $programs 'Supabase Local.lnk'))
-$uninstallLink = $shell.CreateShortcut((Join-Path $programs 'Uninstall Supabase Local.lnk'))
+$link = $shell.CreateShortcut((Join-Path $programs 'Supabase Desktop.lnk'))
+$uninstallLink = $shell.CreateShortcut((Join-Path $programs 'Uninstall Supabase Desktop.lnk'))
 $executable = [IO.Path]::GetFullPath($link.TargetPath)
 if (!$executable.StartsWith((Join-Path $root 'versions')+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)) { throw 'Shortcut escapes installation' }
 if (!(Test-Path -LiteralPath $executable) -or $link.Arguments -ne '' -or $uninstallLink.TargetPath -ne $executable -or $uninstallLink.Arguments -ne '--uninstall') { throw 'Invalid Start menu shortcuts' }
@@ -46,7 +46,7 @@ if ($studio.StatusCode -ne 200 -or $studio.Content -notmatch 'Supabase' -or $stu
 $studio.Content | Set-Content (Join-Path $evidencePath 'studio.html')
 Write-Output 'PASS: installed launcher starts six services, upstream Studio and registered shortcuts.'
 Close-Launcher $LauncherId
-$desktop = Start-Process -FilePath (Join-Path $programs 'Supabase Local.lnk') -PassThru
+$desktop = Start-Process -FilePath (Join-Path $programs 'Supabase Desktop.lnk') -PassThru
 $status = Wait-Ready $desktop.Id
 $status | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $evidencePath 'shortcut-status.json')
 Write-Output 'PASS: one Start menu shortcut launch starts all six services.'

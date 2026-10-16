@@ -64,7 +64,7 @@ impl Action {
     pub fn button(self) -> &'static str {
         match self {
             Self::Restart => "Restart services",
-            Self::Exit => "Exit Supabase Local",
+            Self::Exit => "Exit Supabase Desktop",
         }
     }
     pub fn description(self) -> &'static str {
@@ -73,7 +73,7 @@ impl Action {
                 "Restart all local Supabase services? Active connections will be interrupted. Your project data will be kept."
             }
             Self::Exit => {
-                "Exit Supabase Local and stop all local services? Your project data will be kept."
+                "Exit Supabase Desktop and stop all local services? Your project data will be kept."
             }
         }
     }
@@ -106,7 +106,7 @@ impl Manager {
                 .join("SupabaseLocal");
         std::fs::create_dir_all(&root)?;
         let lock = OpenOptions::new().create(true).truncate(false).read(true).write(true).share_mode(0)
-            .open(root.join("launcher.lock")).context("Supabase Local is already running. Use its notification icon, or close it before opening another launcher.")?;
+            .open(root.join("launcher.lock")).context("Supabase Desktop is already running. Use its notification icon, or close it before opening another launcher.")?;
         let mut random = [0u8; 32];
         getrandom::fill(&mut random)
             .map_err(|e| anyhow::anyhow!("Could not generate launcher token: {e}"))?;
@@ -130,7 +130,7 @@ impl Manager {
         let address = "127.0.0.1:54320".parse().unwrap();
         ensure!(
             std::net::TcpStream::connect_timeout(&address, Duration::from_millis(300)).is_err(),
-            "The local manager port is already in use. Close the other Supabase Local instance first."
+            "The local manager port is already in use. Close the other Supabase Desktop instance first."
         );
         std::fs::create_dir_all(&self.data)?;
         let log = OpenOptions::new()
