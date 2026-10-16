@@ -1,0 +1,53 @@
+name: Assemble verified release installer
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing draft release tag
+        required: true
+      sha256:
+        description: Expected SHA256 of the complete installer
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ inputs.tag }}
+      EXPECTED_SHA256: ${{ inputs.sha256 }}
+    steps:
+      - name: Download installer parts
+        run: gh release download "$RELEASE_TAG" --pattern 'SupabaseLocal.Setup.exe.part-*' --dir parts
+      - name: Assemble and verify exact installer
+        shell: python
+        run: |
+          import hashlib, os, pathlib, re, shutil
+          expected = os.environ['EXPECTED_SHA256'].lower()
+          if not re.fullmatch(r'[0-9a-f]{64}', expected):
+              raise SystemExit('Invalid expected SHA256')
+          parts = sorted(pathlib.Path('parts').glob('SupabaseLocal.Setup.exe.part-*'))
+          if not parts:
+              raise SystemExit('No parts found')
+          for index, part in enumerate(parts):
+              if part.name != f'SupabaseLocal.Setup.exe.part-{index:03d}':
+                  raise SystemExit('Missing or unexpected part')
+          output = pathlib.Path('SupabaseLocal.Setup.exe')
+          with output.open('wb') as destination:
+              for part in parts:
+                  with part.open('rb') as source:
+                      shutil.copyfileobj(source, destination)
+          actual = hashlib.file_digest(output.open('rb'), 'sha256').hexdigest()
+          if actual != expected:
+              raise SystemExit(f'Installer checksum mismatch: {actual}')
+          pathlib.Path('SupabaseLocal.Setup.exe.sha256').write_text(
+              f'{actual}  SupabaseLocal.Setup.exe\n', encoding='ascii')
+          print(f'Verified {output.stat().st_size} bytes, SHA256 {actual}')
+      - name: Upload verified installer and checksum
+        run: gh release upload "$RELEASE_TAG" SupabaseLocal.Setup.exe SupabaseLocal.Setup.exe.sha256 --clobber
