@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use gpui_kit::base::Disableable;
+mod bundle;
 mod payload;
 mod windows;
 use gpui_kit::{
@@ -10,7 +11,6 @@ use gpui_kit::{
     *,
 };
 use std::{path::PathBuf, sync::mpsc, time::Duration};
-include!(concat!(env!("OUT_DIR"), "/payload.rs"));
 
 struct Setup {
     message: String,
@@ -41,7 +41,8 @@ impl Setup {
                 fs2::FileExt::try_lock_exclusive(&lock).map_err(|_| {
                     anyhow::anyhow!("Close the running Supabase Local app before installing.")
                 })?;
-                let directory = payload::install(PAYLOAD, &root, &|s| {
+                let bytes = bundle::read()?;
+                let directory = payload::install(&bytes, &root, &|s| {
                     let _ = tx.send(Ok(s));
                 })?;
                 windows::register(&directory, &root)?;
@@ -116,23 +117,47 @@ impl Render for Setup {
 
 fn main() -> anyhow::Result<()> {
     let args: Vec<_> = std::env::args_os().skip(1).collect();
-    if !args.is_empty() {
+    let verify_ui = args.len() == 2 && args[0] == "--verify-ui";
+    let ui_path = verify_ui.then(|| PathBuf::from(&args[1]));
+    let ui_result = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let ui_result_in_window = ui_result.clone();
+    if verify_ui {
+        eprintln!("GPUI verification: starting platform");
+    }
+    if !args.is_empty() && !verify_ui {
         anyhow::ensure!(
             args.len() == 2 && args[0] == "--verify-install",
-            "Usage: SupabaseLocal.Setup.exe [--verify-install <directory>]"
+            "Usage: SupabaseLocal.Setup.exe [--verify-install <directory> | --verify-ui <result.json>]"
         );
         let root = PathBuf::from(&args[1]);
-        let installed = payload::install(PAYLOAD, &root, &|_| {})?;
+        let bytes = bundle::read()?;
+        let installed = payload::install(&bytes, &root, &|message| println!("{message}"))?;
         std::fs::write(
             root.join("verification-result.json"),
             serde_json::to_vec(&serde_json::json!({"installed": installed}))?,
         )?;
         return Ok(());
     }
-    application().with_assets(assets::Assets).run(|cx| {
+    application().with_assets(assets::Assets).run(move |cx| {
+        if verify_ui {
+            eprintln!("GPUI verification: initializing components");
+        }
         init(cx);
-        open_window(
+        if verify_ui {
+            eprintln!("GPUI verification: opening native window");
+        }
+        cx.on_window_closed(|cx, _| {
+            if cx.windows().is_empty() {
+                cx.quit();
+            }
+        })
+        .detach();
+        let (handle, _) = open_window(
             WindowOptions {
+                // The Windows backend retains SW_HIDE for a new focused window.
+                // Showing without activation also avoids stealing focus from the user.
+                focus: false,
+                show: !verify_ui,
                 window_bounds: Some(WindowBounds::Windowed(Bounds::centered(
                     None,
                     size(px(680.), px(460.)),
@@ -141,7 +166,10 @@ fn main() -> anyhow::Result<()> {
                 ..Default::default()
             },
             cx,
-            |window, cx| {
+            move |window, cx| {
+                if verify_ui {
+                    eprintln!("GPUI verification: native window created");
+                }
                 window.set_window_title("Supabase Local — Setup");
                 let view = cx.new(|_| Setup {
                     message: "Ready to install the bundled native runtime.".into(),
@@ -156,6 +184,27 @@ fn main() -> anyhow::Result<()> {
             },
         )
         .expect("Could not open setup window");
+        if let Some(path) = ui_path {
+            handle
+                .update(cx, |_, window, cx| {
+                    // Hidden windows have no display-driven frames; draw the same
+                    // mounted view explicitly against the native renderer for this check.
+                    let _ = window.draw(cx);
+
+                    eprintln!("GPUI verification: frame rendered");
+                    let verified =
+                        std::fs::write(path, b"{\"nativeWindow\":true,\"frameRendered\":true}")
+                            .is_ok();
+                    ui_result_in_window.store(verified, std::sync::atomic::Ordering::SeqCst);
+                    window.remove_window();
+                    cx.quit();
+                })
+                .expect("Could not render setup window");
+        }
     });
+    anyhow::ensure!(
+        !verify_ui || ui_result.load(std::sync::atomic::Ordering::SeqCst),
+        "GPUI window verification did not complete"
+    );
     Ok(())
 }

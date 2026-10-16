@@ -4,7 +4,7 @@ use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeMap, HashSet},
     fs::{self, File},
-    io::{self, Cursor},
+    io::{self, Cursor, Read, Write},
     path::{Path, PathBuf},
 };
 
@@ -36,20 +36,29 @@ fn safe_path(root: &Path, name: &str) -> Result<PathBuf> {
 
 fn reject_links(path: &Path) -> Result<()> {
     for parent in path.ancestors() {
-        if let Ok(meta) = fs::symlink_metadata(parent) {
-            use std::os::windows::fs::MetadataExt;
-            ensure!(
-                meta.file_attributes() & 0x400 == 0,
-                "Unexpected reparse point: {}",
-                parent.display()
-            );
-        }
+        reject_single_link(parent)?;
+    }
+    Ok(())
+}
+
+fn reject_single_link(path: &Path) -> Result<()> {
+    if let Ok(meta) = fs::symlink_metadata(path) {
+        use std::os::windows::fs::MetadataExt;
+        ensure!(
+            meta.file_attributes() & 0x400 == 0,
+            "Unexpected reparse point: {}",
+            path.display()
+        );
     }
     Ok(())
 }
 
 fn verify(path: &Path, expected: &str) -> Result<()> {
     reject_links(path)?;
+    verify_contents(path, expected)
+}
+
+fn verify_contents(path: &Path, expected: &str) -> Result<()> {
     let mut file = File::open(path)?;
     let mut hash = Sha256::new();
     io::copy(&mut file, &mut hash)?;
@@ -145,8 +154,25 @@ pub fn install(bytes: &[u8], root: &Path, report: &impl Fn(String)) -> Result<Pa
     }
     if destination.exists() {
         report("Checking installed runtime…".into());
-        for (name, hash) in &files {
-            verify(&safe_path(&destination, name)?, hash)?;
+        let mut checked_directories = HashSet::new();
+        for (index, (name, hash)) in files.iter().enumerate() {
+            let path = safe_path(&destination, name)?;
+            for parent in path.parent().unwrap().ancestors() {
+                if checked_directories.contains(parent) {
+                    break;
+                }
+                reject_single_link(parent)?;
+                checked_directories.insert(parent.to_path_buf());
+            }
+            reject_single_link(&path)?;
+            verify_contents(&path, hash)?;
+            if index % 2000 == 0 {
+                report(format!(
+                    "Verified installed files: {}/{}",
+                    index + 1,
+                    files.len()
+                ));
+            }
         }
         restore_links(&destination.join("runtime"))?;
         return Ok(destination);
@@ -154,17 +180,33 @@ pub fn install(bytes: &[u8], root: &Path, report: &impl Fn(String)) -> Result<Pa
     let staging = tempfile::Builder::new()
         .prefix(".staging-")
         .tempdir_in(&versions)?;
+    let mut created_directories = HashSet::new();
+    let mut buffer = [0u8; 65536];
     for (index, (name, hash)) in files.iter().enumerate() {
         let target = safe_path(staging.path(), name)?;
         let mut entry = archive.by_name(name)?;
         if entry.is_dir() || entry.unix_mode().is_some_and(|m| m & 0o170000 == 0o120000) {
             bail!("Unexpected archive link/directory");
         }
-        fs::create_dir_all(target.parent().unwrap())?;
+        let parent = target.parent().unwrap();
+        if created_directories.insert(parent.to_path_buf()) {
+            fs::create_dir_all(parent)?;
+        }
         let mut output = File::create(&target)?;
-        io::copy(&mut entry, &mut output)?;
+        let mut digest = Sha256::new();
+        loop {
+            let count = entry.read(&mut buffer)?;
+            if count == 0 {
+                break;
+            }
+            output.write_all(&buffer[..count])?;
+            digest.update(&buffer[..count]);
+        }
         drop(output);
-        verify(&target, hash)?;
+        ensure!(
+            format!("{:x}", digest.finalize()).eq_ignore_ascii_case(hash),
+            "Checksum mismatch: {name}"
+        );
         if index % 200 == 0 {
             report(format!(
                 "Installing verified files: {}/{}",

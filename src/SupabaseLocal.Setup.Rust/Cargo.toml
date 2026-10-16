@@ -2,7 +2,6 @@
 name = "supabase-local-setup"
 version = "0.3.0"
 edition = "2024"
-build = "build.rs"
 
 [[bin]]
 name = "supabase-local-setup"
@@ -18,8 +17,6 @@ tempfile = "3"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 junction = "1"
 fs2 = "0.4"
-
-[build-dependencies]
 
 [profile.release]
 strip = true
