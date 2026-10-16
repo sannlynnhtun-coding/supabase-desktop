@@ -1,0 +1,5 @@
+# This repository's primary product is the Rust installer and desktop launcher.
+# Keep supporting service code, build scripts and migration references browsable,
+# while counting Rust sources in the repository language statistics.
+* linguist-detectable=false
+*.rs linguist-detectable=true
