@@ -1,8 +1,12 @@
-param([string]$Version, [string]$Root)
+param(
+    [string]$Version,
+    [string]$Root,
+    [string]$Programs = (Join-Path ([Environment]::GetFolderPath('Programs')) 'Supabase Local'),
+    [string]$RegistryPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\SupabaseLocal'
+)
 $ErrorActionPreference = 'Stop'
 $exe = Join-Path $Version 'SupabaseLocal.App.exe'
 if (!(Test-Path -LiteralPath $exe)) { throw 'Verified desktop app is missing.' }
-$programs = Join-Path ([Environment]::GetFolderPath('Programs')) 'Supabase Local'
 New-Item -ItemType Directory -Force -Path $programs | Out-Null
 $shell = New-Object -ComObject WScript.Shell
 foreach ($item in @(@('Supabase Local', ''), @('Uninstall Supabase Local', '--uninstall'))) {
@@ -13,7 +17,7 @@ foreach ($item in @(@('Supabase Local', ''), @('Uninstall Supabase Local', '--un
     $shortcut.IconLocation = $exe
     $shortcut.Save()
 }
-$key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\SupabaseLocal'
+$key = $RegistryPath
 New-Item -Path $key -Force | Out-Null
 $values = @{
     InstallerOwner = 'SupabaseLocal.NativeWindows.v1'

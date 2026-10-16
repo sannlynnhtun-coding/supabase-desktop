@@ -28,3 +28,7 @@ The installed C# desktop launcher owns service startup, shutdown and data-preser
 To repackage an already verified payload after a Rust-only change, run `scripts/package-rust-installer.ps1 -Payload <payload.zip>`. This produces the final EXE and SHA256 sidecar without copying or rebuilding upstream services. The final bundled EXE, rather than Cargo's unpackaged executable, is the release artifact.
 
 Framework documentation: https://gpui-kit.com/docs/getting-started/
+
+`SupabaseLocal.Setup.exe --install` performs the real current-user installation using the same function as the GUI Install button, including prerequisite checks and Windows registration. Unlike `--verify-install`, it creates Start menu and Installed apps entries. `scripts/test-rust-current-user-install.ps1` exercises this path, verifies the registered shortcuts and uninstall command, checks existing project file hashes, and tests the installed launcher with isolated service data. Run it only after closing the local stack.
+
+The PowerShell helper closes its temporary script file before launching PowerShell while retaining the temporary path until the process exits. PowerShell errors are captured and displayed with the failing stage. Regression tests exercise locked-script prevention, arguments containing spaces, actionable error details, and real shortcut/registry registration in an isolated scope.

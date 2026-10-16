@@ -19,36 +19,37 @@ struct Setup {
     installed: Option<PathBuf>,
 }
 
+fn install_for_user(report: &impl Fn(String)) -> anyhow::Result<PathBuf> {
+    windows::prerequisites()?;
+    let root = PathBuf::from(
+        std::env::var_os("LOCALAPPDATA")
+            .ok_or_else(|| anyhow::anyhow!("LOCALAPPDATA is unavailable"))?,
+    )
+    .join("SupabaseLocal");
+    std::fs::create_dir_all(&root)?;
+    let lock = std::fs::OpenOptions::new()
+        .create(true)
+        .truncate(false)
+        .read(true)
+        .write(true)
+        .open(root.join("launcher.lock"))?;
+    fs2::FileExt::try_lock_exclusive(&lock)
+        .map_err(|_| anyhow::anyhow!("Close the running Supabase Local app before installing."))?;
+    let bytes = bundle::read()?;
+    let directory = payload::install(&bytes, &root, report)?;
+    windows::register(&directory, &root)?;
+    Ok(directory)
+}
+
 impl Setup {
     fn install(&mut self, cx: &mut Context<Self>) {
         self.busy = true;
         self.message = "Checking Windows prerequisites…".into();
         let (tx, rx) = mpsc::channel();
         std::thread::spawn(move || {
-            let result = (|| -> anyhow::Result<PathBuf> {
-                windows::prerequisites()?;
-                let root = PathBuf::from(
-                    std::env::var_os("LOCALAPPDATA")
-                        .ok_or_else(|| anyhow::anyhow!("LOCALAPPDATA is unavailable"))?,
-                )
-                .join("SupabaseLocal");
-                std::fs::create_dir_all(&root)?;
-                let lock = std::fs::OpenOptions::new()
-                    .create(true)
-                    .truncate(false)
-                    .read(true)
-                    .write(true)
-                    .open(root.join("launcher.lock"))?;
-                fs2::FileExt::try_lock_exclusive(&lock).map_err(|_| {
-                    anyhow::anyhow!("Close the running Supabase Local app before installing.")
-                })?;
-                let bytes = bundle::read()?;
-                let directory = payload::install(&bytes, &root, &|s| {
-                    let _ = tx.send(Ok(s));
-                })?;
-                windows::register(&directory, &root)?;
-                Ok(directory)
-            })();
+            let result = install_for_user(&|message| {
+                let _ = tx.send(Ok(message));
+            });
             let _ = tx.send(Err(result.map_err(|e| format!("{e:#}"))));
         });
         cx.spawn(async move |this, cx| {
@@ -141,6 +142,11 @@ impl Render for Setup {
 
 fn main() -> anyhow::Result<()> {
     let args: Vec<_> = std::env::args_os().skip(1).collect();
+    if args.len() == 1 && args[0] == "--install" {
+        let directory = install_for_user(&|message| println!("{message}"))?;
+        println!("Installed: {}", directory.display());
+        return Ok(());
+    }
     let verify_ui = args.len() == 2 && args[0] == "--verify-ui";
     let ui_path = verify_ui.then(|| PathBuf::from(&args[1]));
     let ui_result = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
@@ -151,7 +157,7 @@ fn main() -> anyhow::Result<()> {
     if !args.is_empty() && !verify_ui {
         anyhow::ensure!(
             args.len() == 2 && args[0] == "--verify-install",
-            "Usage: SupabaseLocal.Setup.exe [--verify-install <directory> | --verify-ui <result.json>]"
+            "Usage: SupabaseLocal.Setup.exe [--install | --verify-install <directory> | --verify-ui <result.json>]"
         );
         let root = PathBuf::from(&args[1]);
         let bytes = bundle::read()?;

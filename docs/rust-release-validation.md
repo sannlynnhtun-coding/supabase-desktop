@@ -37,7 +37,18 @@ Build output, isolated databases, generated secrets and detailed evidence stay i
 
 The current installer restores the original project's PNG logo, Segoe UI header, "Supabase Local" title, "Unofficial native Windows port" subtitle, and unchanged six-frame Windows icon. The logo is decoded before rendering so it is present in the initial frame. All six native executable icon frames were compared byte for byte with the original ICO, and the packaged GPUI window render check passed.
 
-- Current installer size: 720,333,744 bytes.
-- Current SHA256: `4202a6e32945115bfb01c37151e940ab3341429411e53d3168b42e763792f002`.
+- Branding build size: 720,333,744 bytes.
+- Branding build SHA256: `4202a6e32945115bfb01c37151e940ab3341429411e53d3168b42e763792f002`.
 - Runtime payload hash remains the previously tested version `a1fc3aa17625cfa3`; services were not rebuilt for this branding change.
 - UI evidence: `work/rust-branding-packaged-ui.json` and its adjacent error log.
+
+## Windows integration fix (2026-10-16)
+
+The GUI Install button exposed a failure that extraction-only validation had missed: Rust kept the temporary PowerShell script open with a delete-on-close handle, preventing Windows PowerShell from reading it. The regression was reproduced with the exact file-in-use error. The helper now closes the handle before launching PowerShell, retains the temporary path until completion, captures stderr, and reports the failing prerequisite or registration stage.
+
+All nine Rust tests pass, including temporary script execution, arguments with spaces, underlying error propagation and actual COM shortcut/registry creation in an isolated scope. The packaged executable's `--install` mode calls the same installation function as the GUI button and successfully installed into the real current-user scope. Both Start menu shortcuts and Installed apps metadata were verified, all 1,234 pre-existing project file hashes were unchanged, and the newly installed launcher started all six services using isolated test data and stopped every owned listener gracefully.
+
+- Current installer size: 720,350,640 bytes.
+- Current SHA256: `69bebb99ceae6e501d99cec04fc85fc11a08bcfe3271dd6f8ca8888de0868a5c`.
+- Evidence: `work/rust-install-fix-validation-20261016/installation-result.json` and adjacent logs.
+- This follow-up performed real current-user registration; the earlier isolated release run did not.
