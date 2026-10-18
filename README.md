@@ -86,3 +86,7 @@ See `docs/native-windows.md` for remaining service-port work.
 Use Conventional Commits for each completed task, such as `chore: scaffold ASP.NET Core 10 application` and `feat: add local stack management`.
 
 Git remote: https://github.com/sannlynnhtun-coding/supabase-desktop
+
+## MIT License
+
+This project is licensed under the [MIT License](LICENSE).
