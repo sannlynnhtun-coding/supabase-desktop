@@ -1,5 +1,7 @@
 # Supabase Desktop
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 <img src="src/Shared/Branding/supabase-logo.svg" alt="Supabase logo" width="48" height="50">
 
 An experimental native Windows port of upstream Supabase services, with a Rust / GPUI Kit installer and ASP.NET Core manager. No Docker or WSL2.
